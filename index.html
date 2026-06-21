@@ -586,7 +586,7 @@ function setStatus(state,msg){
 // ─────────────────────────────────────────────
 async function fetchLivePlayers(appid){
   try {
-    const url = `https://TU-PROYECTO.vercel.app/api/steam?appid=${appid}`;
+    const url = `https://pryecto-big-data.vercel.app/api/steam?appid=${appid}`; 
     const ac = new AbortController();
     const t = setTimeout(()=>ac.abort(), 10000);
     const r = await fetch(url, {signal: ac.signal});
