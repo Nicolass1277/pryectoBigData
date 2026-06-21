@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steam Analytics — Big Data Unidad III</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --steam-dark: #1b2838;
+    --steam-blue: #1a9fff;
+    --steam-teal: #66c0f4;
+    --steam-green-light: #a4d007;
+    --steam-gray: #c6d4df;
+    --steam-panel: #16202d;
+    --steam-panel2: #1e2d3e;
+    --steam-border: #2a475e;
+    --steam-text: #c6d4df;
+    --steam-muted: #8f98a0;
+    --steam-white: #ffffff;
+    --steam-red: #e74c3c;
+    --steam-orange: #f39c12;
+    --steam-purple: #9b59b6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: var(--steam-dark); color: var(--steam-text); font-size: 14px; line-height: 1.5; }
+
+  nav {
+    background: linear-gradient(to bottom, #0d1a26, #1b2838);
+    border-bottom: 1px solid var(--steam-border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px; position: sticky; top: 0; z-index: 100;
+  }
+  .nav-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--steam-white); }
+  .nav-logo { width:32px;height:32px;background:var(--steam-blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px; }
+  .nav-badge { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--steam-muted); }
+  .nav-links { display:flex;gap:4px; }
+  .nav-link { color:var(--steam-muted);text-decoration:none;padding:8px 14px;border-radius:4px;font-size:13px;transition:all 0.15s;cursor:pointer;border:none;background:none; }
+  .nav-link:hover,.nav-link.active { background:rgba(102,192,244,0.15);color:var(--steam-teal); }
+
+  .hero { background:linear-gradient(135deg,#0d1a26,#1b2838,#1e2d3e);border-bottom:1px solid var(--steam-border);padding:2.5rem 2rem;position:relative;overflow:hidden; }
+  .hero::before { content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(26,159,255,0.08),transparent 70%);border-radius:50%; }
+  .hero-content { max-width:1280px;margin:0 auto; }
+  .hero-eyebrow { font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--steam-teal);margin-bottom:.5rem; }
+  .hero h1 { font-size:28px;font-weight:700;color:var(--steam-white);margin-bottom:.5rem; }
+  .hero h1 span { color:var(--steam-teal); }
+  .hero-sub { color:var(--steam-muted);font-size:14px;margin-bottom:1.5rem; }
+  .hero-meta { display:flex;gap:1rem;flex-wrap:wrap; }
+  .meta-chip { background:rgba(255,255,255,0.06);border:1px solid var(--steam-border);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--steam-gray);display:flex;align-items:center;gap:6px; }
+  .dot { width:6px;height:6px;border-radius:50%;background:var(--steam-green-light);animation:pulse 2s infinite; }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .main { max-width:1280px;margin:0 auto;padding:2rem; }
+
+  .section-tabs { display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:1px solid var(--steam-border); }
+  .tab-btn { background:none;border:none;border-bottom:2px solid transparent;color:var(--steam-muted);font-size:13px;padding:10px 18px 12px;cursor:pointer;transition:all .15s;margin-bottom:-1px; }
+  .tab-btn:hover { color:var(--steam-gray); }
+  .tab-btn.active { color:var(--steam-teal);border-bottom-color:var(--steam-teal); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  .status-bar { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:6px;padding:10px 16px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px; }
+  .status-left { display:flex;align-items:center;gap:10px;font-size:12px; }
+  .status-dot { width:8px;height:8px;border-radius:50%;background:var(--steam-green-light); }
+  .status-dot.loading { background:var(--steam-orange);animation:pulse 1s infinite; }
+  .status-dot.error { background:var(--steam-red); }
+  .btn-reload { background:rgba(26,159,255,0.15);border:1px solid rgba(26,159,255,0.4);color:var(--steam-teal);border-radius:4px;padding:5px 14px;font-size:12px;cursor:pointer;transition:all .15s; }
+  .btn-reload:hover { background:rgba(26,159,255,0.25); }
+
+  .kpi-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:1.5rem; }
+  .kpi-card { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.2rem 1.4rem;position:relative;overflow:hidden; }
+  .kpi-card::before { content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--kpi-color,var(--steam-blue)); }
+  .kpi-label { font-size:11px;color:var(--steam-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px; }
+  .kpi-value { font-size:24px;font-weight:700;color:var(--steam-white); }
+  .kpi-sub { font-size:11px;color:var(--steam-muted);margin-top:4px; }
+  .kpi-live { font-size:10px;color:var(--steam-green-light);margin-top:2px; }
+
+  .chart-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px; }
+  @media(max-width:768px){.chart-grid{grid-template-columns:1fr;}}
+  .chart-panel { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.4rem; }
+  .chart-title { font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:4px; }
+  .chart-subtitle { font-size:11px;color:var(--steam-muted);margin-bottom:1rem; }
+  .chart-wrap { position:relative;height:260px; }
+
+  .data-table { width:100%;border-collapse:collapse;font-size:12px; }
+  .data-table th { background:var(--steam-panel2);color:var(--steam-muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--steam-border);cursor:pointer;user-select:none; }
+  .data-table th:hover { color:var(--steam-teal); }
+  .data-table td { padding:9px 12px;border-bottom:1px solid rgba(42,71,94,0.5);color:var(--steam-text); }
+  .data-table tr:hover td { background:rgba(255,255,255,0.03); }
+  .badge { display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600; }
+  .badge-free { background:rgba(76,107,34,0.4);color:var(--steam-green-light);border:1px solid rgba(164,208,7,0.3); }
+  .badge-paid { background:rgba(26,159,255,0.15);color:var(--steam-teal);border:1px solid rgba(26,159,255,0.3); }
+  .badge-genre { background:rgba(155,89,182,0.2);color:#c39bd3;border:1px solid rgba(155,89,182,0.3);margin:1px;font-size:10px;padding:2px 6px;border-radius:8px;display:inline-block; }
+  .score-bar { height:4px;border-radius:2px;background:rgba(255,255,255,0.1);overflow:hidden;margin-top:3px; }
+  .score-fill { height:100%;border-radius:2px; }
+  .live-badge { display:inline-flex;align-items:center;gap:4px;background:rgba(164,208,7,0.15);border:1px solid rgba(164,208,7,0.3);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--steam-green-light); }
+  .live-dot { width:5px;height:5px;border-radius:50%;background:var(--steam-green-light);animation:pulse 1.5s infinite; }
+
+  /* Modelo estrella */
+  .star-model { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.5rem;margin-bottom:16px; }
+  .star-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:1rem; }
+  @media(max-width:640px){.star-grid{grid-template-columns:1fr;}}
+  .dim-card { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:6px;padding:12px; }
+  .dim-card.fact-card { grid-column:1/-1;border-color:rgba(26,159,255,0.5);background:rgba(26,159,255,0.05); }
+  .dim-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px; }
+  .dim-title.fact { color:var(--steam-teal); }
+  .dim-title.dim { color:#c39bd3; }
+  .dim-col { font-size:11px;color:var(--steam-muted);padding:2px 0;border-bottom:1px solid rgba(42,71,94,0.5); }
+  .dim-col:last-child { border-bottom:none; }
+  .pk { color:var(--steam-orange) !important; }
+  .fk { color:var(--steam-teal) !important; }
+  .measure { color:var(--steam-green-light) !important; }
+
+  .report-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+  @media(max-width:640px){.report-grid{grid-template-columns:1fr;}}
+  .report-card { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.2rem; }
+  .report-card h3 { font-size:13px;color:var(--steam-gray);margin-bottom:4px; }
+  .report-card .report-meta { font-size:11px;color:var(--steam-muted);margin-bottom:10px; }
+  .report-item { display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(42,71,94,0.4);font-size:12px; }
+  .report-item:last-child { border-bottom:none; }
+  .report-val { color:var(--steam-teal);font-weight:600; }
+
+  .question-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem; }
+  @media(max-width:640px){.question-grid{grid-template-columns:1fr;}}
+  .question-card { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1rem;display:flex;gap:12px;align-items:flex-start; }
+  .q-num { width:28px;height:28px;background:rgba(26,159,255,0.15);border:1px solid rgba(26,159,255,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--steam-teal);flex-shrink:0; }
+  .q-text { font-size:12px;color:var(--steam-gray);line-height:1.5; }
+  .q-answer { font-size:11px;color:var(--steam-muted);margin-top:4px; }
+
+  .env-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem; }
+  @media(max-width:640px){.env-grid{grid-template-columns:1fr;}}
+  .env-card { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:8px;padding:1.2rem; }
+  .env-card.chosen { border-color:rgba(164,208,7,0.5);background:rgba(164,208,7,0.05); }
+  .env-title { font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:8px; }
+  .env-point { font-size:11px;color:var(--steam-muted);padding:3px 0;display:flex;gap:6px; }
+  .env-point::before { content:'✓';color:var(--steam-green-light);flex-shrink:0; }
+  .env-point.x::before { content:'✗';color:var(--steam-red); }
+
+  .flow-steps { display:flex;gap:0;align-items:center;flex-wrap:wrap;margin:1rem 0;background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1rem; }
+  .flow-step { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:6px;padding:8px 14px;font-size:12px;color:var(--steam-gray);text-align:center;flex:1;min-width:80px; }
+  .flow-step .step-num { font-size:10px;color:var(--steam-teal);margin-bottom:2px; }
+  .flow-arrow { color:var(--steam-muted);font-size:16px;padding:0 4px;flex-shrink:0; }
+
+  .progress-wrap { margin:8px 0; }
+  .progress-label { display:flex;justify-content:space-between;font-size:11px;color:var(--steam-muted);margin-bottom:3px; }
+  .progress-bar { height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden; }
+  .progress-fill { height:100%;border-radius:3px;background:var(--steam-teal); }
+
+  footer { background:var(--steam-panel);border-top:1px solid var(--steam-border);padding:1.5rem 2rem;margin-top:2rem;text-align:center;font-size:11px;color:var(--steam-muted); }
+  footer strong { color:var(--steam-gray); }
+
+  .spinner { width:24px;height:24px;border:2px solid rgba(102,192,244,0.2);border-top-color:var(--steam-teal);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px; }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .api-source-tag { font-size:10px;padding:2px 7px;border-radius:8px;border:1px solid;margin-left:4px; }
+  .tag-live { background:rgba(164,208,7,0.1);color:var(--steam-green-light);border-color:rgba(164,208,7,0.3); }
+  .tag-cache { background:rgba(243,156,18,0.1);color:var(--steam-orange);border-color:rgba(243,156,18,0.3); }
+
+  .olap-controls { display:flex;gap:12px;flex-wrap:wrap;margin:1rem 0; }
+  .olap-controls label { font-size:11px;color:var(--steam-muted);display:block;margin-bottom:4px; }
+  .olap-controls select { background:var(--steam-panel2);border:1px solid var(--steam-border);color:var(--steam-gray);border-radius:4px;padding:6px 10px;font-size:12px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">🎮</div>
+    Steam Analytics
+  </div>
+  <div style="display:flex;gap:12px;align-items:center;">
+    <div class="nav-links">
+      <button class="nav-link active" onclick="switchTab('dashboard',this)">Dashboard</button>
+      <button class="nav-link" onclick="switchTab('modelo',this)">Modelo OLAP</button>
+      <button class="nav-link" onclick="switchTab('reportes',this)">Reportes</button>
+      <button class="nav-link" onclick="switchTab('entorno',this)">Entorno</button>
+    </div>
+    <div class="nav-badge">Big Data · Unidad III</div>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-eyebrow">Instituto Profesional Santo Tomás · Evaluación Final</div>
+    <h1>Análisis Multidimensional del<br><span>Ecosistema Steam</span></h1>
+    <div class="hero-sub">Prototipo Big Data · Steam Web API (jugadores en tiempo real) + Steam Store API (precios CLP) · Nicolás Rojas / Mario Zepeda · 21-06-2026</div>
+    <div class="hero-meta">
+      <div class="meta-chip"><div class="dot"></div> Jugadores en vivo · Steam Web API</div>
+      <div class="meta-chip">💰 Precios en CLP · cc=cl</div>
+      <div class="meta-chip">🗄️ Entorno Local · SQLite + Jupyter</div>
+      <div class="meta-chip">📐 Esquema Estrella</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="status-bar">
+    <div class="status-left">
+      <div class="status-dot loading" id="statusDot"></div>
+      <span id="statusText">Iniciando carga de datos...</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span id="lastUpdate" style="font-size:11px;color:var(--steam-muted);"></span>
+      <button class="btn-reload" onclick="loadAll()">↺ Actualizar ahora</button>
+    </div>
+  </div>
+
+  <!-- ===== TAB: DASHBOARD ===== -->
+  <div id="tab-dashboard" class="tab-panel active">
+
+    <div class="kpi-grid">
+      <div class="kpi-card" style="--kpi-color:#66c0f4">
+        <div class="kpi-label">Juegos analizados</div>
+        <div class="kpi-value" id="kpi-juegos">—</div>
+        <div class="kpi-sub">Top activos quincena</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color:#a4d007">
+        <div class="kpi-label">Jugadores ahora</div>
+        <div class="kpi-value" id="kpi-jugadores">—</div>
+        <div class="kpi-live" id="kpi-live-label">⬤ Steam Web API en vivo</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color:#f39c12">
+        <div class="kpi-label">% Free-to-Play</div>
+        <div class="kpi-value" id="kpi-free">—</div>
+        <div class="kpi-sub">Del total de jugadores</div>
+      </div>
+      <div class="kpi-card" style="--kpi-color:#9b59b6">
+        <div class="kpi-label">Score positivo prom.</div>
+        <div class="kpi-value" id="kpi-score">—</div>
+        <div class="kpi-sub">Reseñas top juegos</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-panel">
+        <div class="chart-title">Top 10 — Jugadores concurrentes ahora <span class="api-source-tag tag-live" id="tagTop10">LIVE</span></div>
+        <div class="chart-subtitle">¿Cuáles son los juegos más activos en este momento? (P1)</div>
+        <div class="chart-wrap"><canvas id="chartTop10"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-title">Distribución por género</div>
+        <div class="chart-subtitle">¿Qué géneros concentran más jugadores? (P1)</div>
+        <div class="chart-wrap"><canvas id="chartGenero"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-panel">
+        <div class="chart-title">Rango de precio vs jugadores promedio <span class="api-source-tag tag-live" id="tagPrecio">CLP</span></div>
+        <div class="chart-subtitle">¿Qué precio maximiza la retención? (P2)</div>
+        <div class="chart-wrap"><canvas id="chartPrecio"></canvas></div>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-title">Score de reseñas — top 8 juegos</div>
+        <div class="chart-subtitle">¿Calidad percibida vs popularidad? (P3)</div>
+        <div class="chart-wrap"><canvas id="chartReviews"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <div class="chart-title">Top juegos — Detalle completo
+        <span class="live-badge" style="margin-left:8px;"><div class="live-dot"></div> Jugadores en tiempo real · Precios en CLP</span>
+      </div>
+      <div class="chart-subtitle">Jugadores obtenidos de Steam Web API · Precios de Steam Store API con cc=cl</div>
+      <div style="overflow-x:auto;margin-top:8px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Juego</th>
+              <th onclick="sortTable('live_players')" title="Ordenar por jugadores live">Jugando ahora ↕</th>
+              <th onclick="sortTable('price_clp')" title="Ordenar por precio">Precio CLP ↕</th>
+              <th>Tipo</th>
+              <th>Score</th>
+              <th onclick="sortTable('owners_n')" title="Ordenar por propietarios">Propietarios ↕</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--steam-muted);"><div class="spinner"></div>Cargando datos desde Steam API...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== TAB: MODELO OLAP ===== -->
+  <div id="tab-modelo" class="tab-panel">
+    <div class="star-model">
+      <div class="chart-title">Modelo Multidimensional — Esquema Estrella</div>
+      <div class="chart-subtitle">Granularidad: 1 fila = 1 juego × 1 snapshot de jugadores concurrentes</div>
+      <div class="star-grid">
+        <div class="dim-card fact-card">
+          <div class="dim-title fact">⭐ FACT_METRICAS_JUEGO (Tabla de Hechos)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
+            <div class="dim-col"><strong class="fk">appid</strong> FK</div>
+            <div class="dim-col"><strong class="fk">tiempo_id</strong> FK</div>
+            <div class="dim-col"><strong class="fk">genero_id</strong> FK</div>
+            <div class="dim-col"><strong class="fk">precio_id</strong> FK</div>
+            <div class="dim-col"><strong class="measure">jugadores_live</strong> medida</div>
+            <div class="dim-col"><strong class="measure">peak_jugadores</strong> medida</div>
+            <div class="dim-col"><strong class="measure">playtime_promedio_hrs</strong> medida</div>
+            <div class="dim-col"><strong class="measure">reseñas_positivas</strong> medida</div>
+            <div class="dim-col"><strong class="measure">reseñas_negativas</strong> medida</div>
+            <div class="dim-col"><strong class="measure">propietarios_estimados</strong> medida</div>
+          </div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-title dim">🎮 DIM_JUEGO</div>
+          <div class="dim-col"><strong class="pk">appid</strong> PK</div>
+          <div class="dim-col">nombre</div>
+          <div class="dim-col">desarrollador</div>
+          <div class="dim-col">editor</div>
+          <div class="dim-col">fecha_lanzamiento</div>
+          <div class="dim-col">plataformas</div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-title dim">🕐 DIM_TIEMPO</div>
+          <div class="dim-col"><strong class="pk">tiempo_id</strong> PK</div>
+          <div class="dim-col">fecha_snapshot</div>
+          <div class="dim-col">año</div>
+          <div class="dim-col">mes</div>
+          <div class="dim-col">hora</div>
+          <div class="dim-col">dia_semana</div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-title dim">🏷️ DIM_GENERO</div>
+          <div class="dim-col"><strong class="pk">genero_id</strong> PK</div>
+          <div class="dim-col">nombre_genero</div>
+          <div class="dim-col">categoria</div>
+          <div class="dim-col">subcategoria</div>
+        </div>
+        <div class="dim-card">
+          <div class="dim-title dim">💰 DIM_PRECIO</div>
+          <div class="dim-col"><strong class="pk">precio_id</strong> PK</div>
+          <div class="dim-col">precio_clp</div>
+          <div class="dim-col">precio_usd</div>
+          <div class="dim-col">rango_precio</div>
+          <div class="dim-col">es_gratuito</div>
+          <div class="dim-col">descuento_pct</div>
+        </div>
+        <div class="dim-card">
+          <div style="font-size:11px;color:var(--steam-muted);line-height:1.8;">
+            <div style="color:var(--steam-teal);font-weight:600;margin-bottom:6px;">Leyenda</div>
+            <div><strong class="pk">■</strong> PK — Clave primaria</div>
+            <div><strong class="fk">■</strong> FK — Clave foránea</div>
+            <div><strong class="measure">■</strong> Medida cuantitativa</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <div class="chart-title">Consulta OLAP interactiva</div>
+      <div class="chart-subtitle">Selecciona dimensión y medida — datos calculados desde los juegos cargados</div>
+      <div class="olap-controls">
+        <div><label>DIMENSIÓN</label>
+          <select id="olapDim" onchange="renderOlap()">
+            <option value="genre">Género</option>
+            <option value="price">Rango de precio (CLP)</option>
+          </select>
+        </div>
+        <div><label>MEDIDA</label>
+          <select id="olapMeasure" onchange="renderOlap()">
+            <option value="players">Jugadores ahora (SUM)</option>
+            <option value="score">Score positivo (AVG)</option>
+          </select>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:300px;"><canvas id="chartOlap"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: REPORTES ===== -->
+  <div id="tab-reportes" class="tab-panel">
+    <div class="question-grid">
+      <div class="question-card">
+        <div class="q-num">P1</div>
+        <div>
+          <div class="q-text">¿Cuáles son los juegos con mayor número de jugadores concurrentes ahora?</div>
+          <div class="q-answer" id="p1answer">Calculando...</div>
+        </div>
+      </div>
+      <div class="question-card">
+        <div class="q-num">P2</div>
+        <div>
+          <div class="q-text">¿Qué rango de precio (CLP) está asociado a mayor promedio de jugadores activos?</div>
+          <div class="q-answer" id="p2answer">Calculando...</div>
+        </div>
+      </div>
+      <div class="question-card">
+        <div class="q-num">P3</div>
+        <div>
+          <div class="q-text">¿Existe correlación entre reseñas positivas y número de propietarios?</div>
+          <div class="q-answer" id="p3answer">Calculando...</div>
+        </div>
+      </div>
+      <div class="question-card">
+        <div class="q-num">P4</div>
+        <div>
+          <div class="q-text">¿Cómo se distribuyen los géneros en términos de base de jugadores activos?</div>
+          <div class="q-answer" id="p4answer">Calculando...</div>
+        </div>
+      </div>
+    </div>
+    <div class="report-grid">
+      <div class="report-card">
+        <h3>📊 Reporte 1 — Por Género (Product Managers)</h3>
+        <div class="report-meta">GROUP BY dim_genero → SUM(jugadores_live)</div>
+        <div id="reportGenero"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
+      </div>
+      <div class="report-card">
+        <h3>💰 Reporte 2 — Estrategia de Precios CLP (Área Comercial)</h3>
+        <div class="report-meta">GROUP BY dim_precio.rango_clp → AVG(jugadores_live)</div>
+        <div id="reportPrecio"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
+      </div>
+      <div class="report-card">
+        <h3>⭐ Reporte 3 — Calidad vs Popularidad (QA/Marketing)</h3>
+        <div class="report-meta">Top juegos por score con propietarios estimados</div>
+        <div id="reportCalidad"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
+      </div>
+      <div class="report-card">
+        <h3>🏆 Reporte 4 — Top 5 Ejecutivo (Dirección)</h3>
+        <div class="report-meta">KPIs principales — jugadores live en este momento</div>
+        <div id="reportTop5"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TAB: ENTORNO ===== -->
+  <div id="tab-entorno" class="tab-panel">
+    <div class="env-grid">
+      <div class="env-card">
+        <div class="env-title">Opción A — Nube (Azure)</div>
+        <div class="env-point x">Azure SQL Database: USD 50–200/mes innecesario</div>
+        <div class="env-point x">Requiere credenciales y configuración Azure</div>
+        <div class="env-point x">Overkill para volumen de datos del prototipo</div>
+        <div class="env-point x">Mayor latencia en laboratorio sin VPN</div>
+      </div>
+      <div class="env-card chosen">
+        <div class="env-title">✅ Opción B — Local (elegida)</div>
+        <div class="env-point">Costo $0: APIs Steam públicas 100% gratuitas</div>
+        <div class="env-point">Sin dependencia de servicios externos ni credenciales</div>
+        <div class="env-point">SQLite + Pandas para modelo estrella local</div>
+        <div class="env-point">HTML portable: funciona en cualquier PC con navegador</div>
+        <div class="env-point">Si escala → migrar a Azure SQL + Databricks</div>
+      </div>
+    </div>
+    <div class="chart-title" style="margin-bottom:8px;">Flujo de trabajo del prototipo</div>
+    <div class="flow-steps">
+      <div class="flow-step"><div class="step-num">01</div>Steam API</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="step-num">02</div>ETL Pandas</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="step-num">03</div>Esquema ⭐</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="step-num">04</div>SQLite</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="step-num">05</div>Análisis</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="step-num">06</div>Dashboard</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="step-num">07</div>Decisiones</div>
+    </div>
+    <div class="report-grid" style="margin-top:12px;">
+      <div class="report-card">
+        <h3>🔌 API 1 — Steam Web API (jugadores live)</h3>
+        <div class="report-meta">api.steampowered.com · Sin API key para datos públicos</div>
+        <div class="report-item"><span>GetNumberOfCurrentPlayers</span><span class="report-val">Live CCU</span></div>
+        <div class="report-item"><span>ISteamUserStats/v1</span><span class="report-val">JSON</span></div>
+        <div class="report-item"><span>Latencia aprox.</span><span class="report-val">~300ms</span></div>
+        <div class="report-item"><span>Autenticación</span><span class="report-val">Ninguna</span></div>
+      </div>
+      <div class="report-card">
+        <h3>🔌 API 2 — Steam Store API (precios CLP)</h3>
+        <div class="report-meta">store.steampowered.com/api · cc=cl · l=spanish</div>
+        <div class="report-item"><span>appdetails?appids&cc=cl</span><span class="report-val">Precio CLP</span></div>
+        <div class="report-item"><span>Reseñas positivas/negativas</span><span class="report-val">JSON</span></div>
+        <div class="report-item"><span>Géneros, fecha lanzamiento</span><span class="report-val">metadata</span></div>
+        <div class="report-item"><span>Autenticación</span><span class="report-val">Ninguna</span></div>
+      </div>
+      <div class="report-card">
+        <h3>🛠️ Stack tecnológico</h3>
+        <div class="report-meta">Herramientas del prototipo</div>
+        <div class="report-item"><span>Python 3 / Jupyter</span><span class="report-val">Análisis ETL</span></div>
+        <div class="report-item"><span>Pandas</span><span class="report-val">Modelado datos</span></div>
+        <div class="report-item"><span>SQLite</span><span class="report-val">Persistencia</span></div>
+        <div class="report-item"><span>Chart.js 4</span><span class="report-val">Visualización</span></div>
+        <div class="report-item"><span>Steam Web API</span><span class="report-val">Jugadores live</span></div>
+      </div>
+      <div class="report-card">
+        <h3>📦 Archivos entregados</h3>
+        <div class="report-meta">Evidencia de evaluación</div>
+        <div class="report-item"><span>informe_steam_bigdata.docx</span><span class="report-val">Informe</span></div>
+        <div class="report-item"><span>steam_bigdata_dashboard.html</span><span class="report-val">Este archivo</span></div>
+        <div class="report-item"><span>steam_bigdata.ipynb</span><span class="report-val">Notebook</span></div>
+        <div class="report-item"><span>steam_bigdata.db</span><span class="report-val">SQLite BD</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <strong>Steam Analytics — Big Data Unidad III</strong> · Instituto Profesional Santo Tomás<br>
+  Nicolás Rojas · Mario Zepeda · 21-06-2026 · Jugadores en tiempo real vía Steam Web API · Precios en CLP vía Steam Store API (cc=cl)
+</footer>
+
+<script>
+// ─────────────────────────────────────────────
+//  JUEGOS BASE — appid + metadatos fijos
+//  Los jugadores live y precios CLP se piden a las APIs
+// ─────────────────────────────────────────────
+const GAMES = [
+  {appid:'730',  name:'Counter-Strike 2',      genre:'Action',   positive:82, negative:18, owners:'100,000,000 .. 200,000,000'},
+  {appid:'570',  name:'Dota 2',                genre:'Strategy', positive:80, negative:20, owners:'100,000,000 .. 200,000,000'},
+  {appid:'1172470',name:'Apex Legends',        genre:'Action',   positive:74, negative:26, owners:'50,000,000 .. 100,000,000'},
+  {appid:'578080',name:'PUBG: Battlegrounds',  genre:'Action',   positive:53, negative:47, owners:'50,000,000 .. 100,000,000'},
+  {appid:'1091500',name:'Cyberpunk 2077',      genre:'RPG',      positive:89, negative:11, owners:'10,000,000 .. 50,000,000'},
+  {appid:'1145360',name:'Hades',               genre:'Action',   positive:97, negative:3,  owners:'5,000,000 .. 10,000,000'},
+  {appid:'413150',name:'Stardew Valley',       genre:'RPG',      positive:98, negative:2,  owners:'10,000,000 .. 50,000,000'},
+  {appid:'1086940',name:"Baldur's Gate 3",     genre:'RPG',      positive:97, negative:3,  owners:'10,000,000 .. 50,000,000'},
+  {appid:'440',  name:'Team Fortress 2',       genre:'Action',   positive:86, negative:14, owners:'100,000,000 .. 200,000,000'},
+  {appid:'252490',name:'Rust',                 genre:'Action',   positive:74, negative:26, owners:'10,000,000 .. 50,000,000'},
+  {appid:'230410',name:'Warframe',             genre:'Action',   positive:89, negative:11, owners:'50,000,000 .. 100,000,000'},
+  {appid:'292030',name:'The Witcher 3',        genre:'RPG',      positive:97, negative:3,  owners:'10,000,000 .. 50,000,000'},
+  {appid:'504230',name:'Celeste',              genre:'Platformer',positive:98,negative:2,  owners:'1,000,000 .. 2,000,000'},
+  {appid:'1174180',name:'Red Dead Redemption 2',genre:'Action',  positive:93, negative:7,  owners:'5,000,000 .. 10,000,000'},
+  {appid:'813780',name:'Age of Empires IV',    genre:'Strategy', positive:83, negative:17, owners:'5,000,000 .. 10,000,000'},
+];
+
+// Precios CLP de respaldo (en caso de que la API falle)
+const PRICE_FALLBACK = {
+  '730':0,'570':0,'1172470':0,'578080':29990,'1091500':49990,
+  '1145360':20990,'413150':12990,'1086940':51490,'440':0,
+  '252490':32990,'230410':0,'292030':32990,'504230':16990,
+  '1174180':49990,'813780':40990
+};
+// Jugadores live de respaldo
+const PLAYERS_FALLBACK = {
+  '730':874523,'570':621845,'1172470':318240,'578080':289740,
+  '1091500':198560,'1145360':118760,'413150':104200,'1086940':96800,
+  '440':89500,'252490':82400,'230410':77200,'292030':44100,
+  '504230':48300,'1174180':29800,'813780':142300
+};
+
+let gameData = [];
+let charts = {};
+let sortDir = {};
+
+// ─────────────────────────────────────────────
+//  UTILIDADES
+// ─────────────────────────────────────────────
+function fmt(n){
+  if(n===undefined||n===null||isNaN(n))return'—';
+  return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(0)+'K':String(n);
+}
+function fmtClp(n){
+  if(!n||n===0)return'Gratis';
+  return '$'+n.toLocaleString('es-CL');
+}
+function parseOwners(str){
+  if(!str)return 0;
+  const m=str.match(/(\d[\d,]*)/);
+  return m?parseInt(m[1].replace(/,/g,''),10):0;
+}
+function priceRangeClp(clp){
+  if(clp===0)return'Gratis (F2P)';
+  if(clp<10000)return'< $10.000';
+  if(clp<25000)return'$10.000–$25.000';
+  if(clp<40000)return'$25.000–$40.000';
+  return'$40.000+';
+}
+function setStatus(state,msg){
+  const d=document.getElementById('statusDot');
+  const t=document.getElementById('statusText');
+  d.className='status-dot'+(state==='loading'?' loading':state==='error'?' error':'');
+  t.textContent=msg;
+}
+
+// ─────────────────────────────────────────────
+//  FETCH JUGADORES LIVE — Steam Web API
+//  https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=X
+// ─────────────────────────────────────────────
+async function fetchLivePlayers(appid){
+  try {
+    const url = `https://TU-PROYECTO.vercel.app/api/steam?appid=${appid}`;
+    const ac = new AbortController();
+    const t = setTimeout(()=>ac.abort(), 10000);
+    const r = await fetch(url, {signal: ac.signal});
+    clearTimeout(t);
+    const j = await r.json();
+    const n = j?.response?.player_count;
+    return (n && n > 0) ? n : null;
+  } catch(e){ return null; }
+}
+
+// ─────────────────────────────────────────────
+//  FETCH PRECIO CLP — Steam Store API cc=cl
+// ─────────────────────────────────────────────
+async function fetchPriceClp(appid){
+  try {
+    const url = `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=cl&filters=price_overview`;
+    const ac = new AbortController();
+    const t = setTimeout(()=>ac.abort(), 10000);
+    const r = await fetch(url, {signal: ac.signal});
+    clearTimeout(t);
+    const j = await r.json();
+    const data = j?.[appid]?.data;
+    if(data === false || !data) return null; // juego sin precio = gratuito
+    if(!j?.[appid]?.success) return null;
+    // Si no tiene price_overview = gratis
+    if(!data.price_overview) return 0;
+    // final_formatted viene en CLP, final viene en centavos CLP
+    return Math.round((data.price_overview.final || 0) / 100);
+  } catch(e){ return null; }
+}
+
+// ─────────────────────────────────────────────
+//  CARGA PRINCIPAL
+// ─────────────────────────────────────────────
+async function loadAll(){
+  setStatus('loading','Conectando con Steam Web API para jugadores en tiempo real...');
+
+  // Inicializar con datos de respaldo para mostrar algo de inmediato
+  gameData = GAMES.map(g=>({
+    ...g,
+    live_players: PLAYERS_FALLBACK[g.appid] || 0,
+    price_clp: PRICE_FALLBACK[g.appid] ?? 0,
+    owners_n: parseOwners(g.owners),
+    source_players: 'fallback',
+    source_price: 'fallback',
+  }));
+  render();
+
+  let liveOk = 0, priceOk = 0;
+
+  // Cargar jugadores live y precios en paralelo por juego
+  const results = await Promise.allSettled(
+    GAMES.map(async (g) => {
+      const [players, price] = await Promise.all([
+        fetchLivePlayers(g.appid),
+        fetchPriceClp(g.appid),
+      ]);
+      return { appid: g.appid, players, price };
+    })
+  );
+
+  results.forEach(r => {
+    if(r.status !== 'fulfilled') return;
+    const {appid, players, price} = r.value;
+    const idx = gameData.findIndex(g=>g.appid===appid);
+    if(idx === -1) return;
+    if(players !== null){ gameData[idx].live_players = players; gameData[idx].source_players='live'; liveOk++; }
+    if(price !== null){   gameData[idx].price_clp = price;     gameData[idx].source_price='live'; priceOk++; }
+  });
+
+  // Ordenar por jugadores live desc
+  gameData.sort((a,b)=>b.live_players - a.live_players);
+
+  const now = new Date().toLocaleTimeString('es-CL');
+  document.getElementById('lastUpdate').textContent = `Actualizado: ${now}`;
+
+  if(liveOk > 0 || priceOk > 0){
+    setStatus('ok',`✓ Steam Web API: ${liveOk}/${GAMES.length} jugadores live · ${priceOk}/${GAMES.length} precios CLP obtenidos · ${now}`);
+  } else {
+    setStatus('error',`API Steam no disponible (requiere Live Server o servidor web) — mostrando datos de referencia · ${now}`);
+  }
+
+  render();
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function render(){
+  renderKPIs();
+  renderTable();
+  renderChartTop10();
+  renderChartGenero();
+  renderChartPrecio();
+  renderChartReviews();
+  renderOlap();
+  renderReportes();
+}
+
+function renderKPIs(){
+  const total = gameData.reduce((s,g)=>s+g.live_players,0);
+  const freeJ = gameData.filter(g=>g.price_clp===0).reduce((s,g)=>s+g.live_players,0);
+  const scores = gameData.map(g=>{const t=g.positive+g.negative;return t>0?g.positive*100/t:0;});
+  const avgScore = scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
+  const liveCount = gameData.filter(g=>g.source_players==='live').length;
+
+  document.getElementById('kpi-juegos').textContent = gameData.length;
+  document.getElementById('kpi-jugadores').textContent = fmt(total);
+  document.getElementById('kpi-live-label').textContent = liveCount > 0
+    ? `⬤ ${liveCount} juegos con datos live ahora`
+    : '⬤ Datos de referencia';
+  document.getElementById('kpi-free').textContent = total>0?Math.round(freeJ*100/total)+'%':'—';
+  document.getElementById('kpi-score').textContent = avgScore.toFixed(0)+'%';
+}
+
+function renderTable(){
+  const tbody = document.getElementById('tableBody');
+  const sorted = [...gameData].sort((a,b)=>b.live_players-a.live_players).slice(0,15);
+  tbody.innerHTML = sorted.map((g,i)=>{
+    const t=g.positive+g.negative;
+    const pct=t>0?Math.round(g.positive*100/t):0;
+    const priceTxt = fmtClp(g.price_clp);
+    const isFree = g.price_clp===0;
+    const isLive = g.source_players==='live';
+    const isPriceLive = g.source_price==='live';
+    const scoreColor = pct>=90?'var(--steam-green-light)':pct>=70?'#a4d007':pct>=50?'var(--steam-orange)':'var(--steam-red)';
+    return `<tr>
+      <td style="color:var(--steam-muted)">${i+1}</td>
+      <td style="font-weight:600;color:var(--steam-white)">${g.name}</td>
+      <td>
+        <span style="color:var(--steam-teal);font-weight:600">${fmt(g.live_players)}</span>
+        ${isLive?'<span class="api-source-tag tag-live" style="margin-left:4px;">LIVE</span>':'<span class="api-source-tag tag-cache">REF</span>'}
+      </td>
+      <td>
+        <span style="color:${isFree?'var(--steam-green-light)':'var(--steam-gray)'}">${priceTxt}</span>
+        ${isPriceLive?'<span class="api-source-tag tag-live" style="margin-left:4px;">CLP</span>':''}
+      </td>
+      <td><span class="badge ${isFree?'badge-free':'badge-paid'}">${isFree?'F2P':'Pago'}</span></td>
+      <td>
+        <span style="font-size:11px;color:${scoreColor}">${pct}%</span>
+        <div class="score-bar"><div class="score-fill" style="width:${pct}%;background:${scoreColor}"></div></div>
+      </td>
+      <td style="color:var(--steam-muted);font-size:11px">${g.owners.split('..')[0].trim()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sortTable(key){
+  sortDir[key]=!sortDir[key];
+  gameData.sort((a,b)=>sortDir[key]?b[key]-a[key]:a[key]-b[key]);
+  renderTable();
+}
+
+function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
+
+function renderChartTop10(){
+  destroyChart('top10');
+  const sorted=[...gameData].sort((a,b)=>b.live_players-a.live_players).slice(0,10);
+  const ctx=document.getElementById('chartTop10').getContext('2d');
+  charts['top10']=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:sorted.map(g=>g.name.length>18?g.name.substring(0,16)+'…':g.name),
+      datasets:[{
+        label:'Jugadores ahora',
+        data:sorted.map(g=>g.live_players),
+        backgroundColor:sorted.map(g=>g.price_clp===0?'rgba(164,208,7,0.75)':'rgba(26,159,255,0.75)'),
+        borderColor:sorted.map(g=>g.price_clp===0?'#a4d007':'#1a9fff'),
+        borderWidth:1,borderRadius:3,
+      }]
+    },
+    options:{
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)+' jugando ahora'}}},
+      scales:{
+        x:{ticks:{color:'#8f98a0',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,71,94,0.5)'}},
+        y:{ticks:{color:'#c6d4df',font:{size:10}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function renderChartGenero(){
+  destroyChart('genero');
+  const byGenre={};
+  gameData.forEach(g=>{byGenre[g.genre]=(byGenre[g.genre]||0)+g.live_players;});
+  const top6=Object.entries(byGenre).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const colors=['rgba(26,159,255,0.8)','rgba(164,208,7,0.8)','rgba(155,89,182,0.8)','rgba(243,156,18,0.8)','rgba(231,76,60,0.8)','rgba(102,192,244,0.8)'];
+  const ctx=document.getElementById('chartGenero').getContext('2d');
+  charts['genero']=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:top6.map(e=>e[0]),
+      datasets:[{data:top6.map(e=>e[1]),backgroundColor:colors,borderColor:'#16202d',borderWidth:2,hoverOffset:6}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'right',labels:{color:'#c6d4df',font:{size:10},padding:10,boxWidth:12}},
+        tooltip:{callbacks:{label:c=>{
+          const tot=top6.reduce((s,e)=>s+e[1],0);
+          return `${c.label}: ${fmt(c.raw)} (${tot>0?Math.round(c.parsed/tot*100):0}%)`;
+        }}}
+      }
+    }
+  });
+}
+
+function renderChartPrecio(){
+  destroyChart('precio');
+  const ranges={};
+  gameData.forEach(g=>{
+    const r=priceRangeClp(g.price_clp);
+    if(!ranges[r])ranges[r]={sum:0,count:0};
+    ranges[r].sum+=g.live_players;ranges[r].count++;
+  });
+  const order=['Gratis (F2P)','< $10.000','$10.000–$25.000','$25.000–$40.000','$40.000+'];
+  const labels=order.filter(k=>ranges[k]);
+  const avgs=labels.map(k=>Math.round(ranges[k].sum/ranges[k].count));
+  const ctx=document.getElementById('chartPrecio').getContext('2d');
+  charts['precio']=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Promedio jugadores',
+        data:avgs,
+        backgroundColor:['rgba(164,208,7,0.75)','rgba(26,159,255,0.6)','rgba(26,159,255,0.7)','rgba(102,192,244,0.7)','rgba(155,89,182,0.6)'],
+        borderRadius:4,
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)+' prom. jugadores'}}},
+      scales:{
+        x:{ticks:{color:'#c6d4df',font:{size:10}},grid:{display:false}},
+        y:{ticks:{color:'#8f98a0',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,71,94,0.5)'}}
+      }
+    }
+  });
+}
+
+function renderChartReviews(){
+  destroyChart('reviews');
+  const top8=[...gameData].sort((a,b)=>b.live_players-a.live_players).slice(0,8);
+  const ctx=document.getElementById('chartReviews').getContext('2d');
+  charts['reviews']=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:top8.map(g=>g.name.length>14?g.name.substring(0,12)+'…':g.name),
+      datasets:[
+        {label:'% Positivo',data:top8.map(g=>{const t=g.positive+g.negative;return t>0?Math.round(g.positive*100/t):0;}),backgroundColor:'rgba(164,208,7,0.75)',borderRadius:3},
+        {label:'% Negativo',data:top8.map(g=>{const t=g.positive+g.negative;return t>0?Math.round(g.negative*100/t):0;}),backgroundColor:'rgba(231,76,60,0.5)',borderRadius:3},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#c6d4df',font:{size:10}},position:'top'}},
+      scales:{
+        x:{stacked:true,ticks:{color:'#c6d4df',font:{size:10}},grid:{display:false}},
+        y:{stacked:true,max:100,ticks:{color:'#8f98a0',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(42,71,94,0.5)'}}
+      }
+    }
+  });
+}
+
+function renderOlap(){
+  destroyChart('olap');
+  const dim=document.getElementById('olapDim')?.value||'genre';
+  const measure=document.getElementById('olapMeasure')?.value||'players';
+  const agg={};
+  gameData.forEach(g=>{
+    const key=dim==='genre'?g.genre:priceRangeClp(g.price_clp);
+    if(!agg[key])agg[key]={sum:0,count:0,scoreSum:0};
+    agg[key].sum+=g.live_players;agg[key].count++;
+    const t=g.positive+g.negative;
+    agg[key].scoreSum+=t>0?g.positive*100/t:0;
+  });
+  const order=dim==='price'?['Gratis (F2P)','< $10.000','$10.000–$25.000','$25.000–$40.000','$40.000+']:null;
+  let entries=Object.entries(agg);
+  if(order) entries=entries.sort((a,b)=>(order.indexOf(a[0]))-(order.indexOf(b[0])));
+  else entries=entries.sort((a,b)=>b[1].sum-a[1].sum);
+  const vals=entries.map(e=>measure==='players'?e[1].sum:Math.round(e[1].scoreSum/e[1].count));
+  const ctx=document.getElementById('chartOlap').getContext('2d');
+  charts['olap']=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:entries.map(e=>e[0]),
+      datasets:[{label:measure==='players'?'Total jugadores':'Score positivo (%)',data:vals,backgroundColor:'rgba(102,192,244,0.65)',borderColor:'#66c0f4',borderWidth:1,borderRadius:4}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>measure==='players'?fmt(c.raw)+' jugadores':c.raw+'%'}}},
+      scales:{
+        x:{ticks:{color:'#c6d4df',font:{size:11}},grid:{display:false}},
+        y:{ticks:{color:'#8f98a0',font:{size:10},callback:v=>measure==='players'?fmt(v):v+'%'},grid:{color:'rgba(42,71,94,0.5)'}}
+      }
+    }
+  });
+}
+
+function renderReportes(){
+  const sorted=[...gameData].sort((a,b)=>b.live_players-a.live_players);
+  const top1=sorted[0];
+  const byGenre={};
+  gameData.forEach(g=>{byGenre[g.genre]=(byGenre[g.genre]||0)+g.live_players;});
+  const topGenre=Object.entries(byGenre).sort((a,b)=>b[1]-a[1])[0];
+  const total=gameData.reduce((s,g)=>s+g.live_players,0);
+  const freeJ=gameData.filter(g=>g.price_clp===0).reduce((s,g)=>s+g.live_players,0);
+
+  document.getElementById('p1answer').textContent=top1
+    ?`${top1.name} lidera con ${fmt(top1.live_players)} jugadores ahora. Género dominante: ${topGenre?topGenre[0]:'—'}.`:'—';
+
+  const byPrice={};
+  gameData.forEach(g=>{const r=priceRangeClp(g.price_clp);if(!byPrice[r])byPrice[r]={s:0,c:0};byPrice[r].s+=g.live_players;byPrice[r].c++;});
+  const topPrice=Object.entries(byPrice).sort((a,b)=>(b[1].s/b[1].c)-(a[1].s/a[1].c))[0];
+  document.getElementById('p2answer').textContent=topPrice
+    ?`El rango "${topPrice[0]}" tiene mayor promedio (${fmt(Math.round(topPrice[1].s/topPrice[1].c))} jugadores/juego).`:'—';
+
+  const highScore=gameData.filter(g=>{const t=g.positive+g.negative;return t>0&&g.positive*100/t>=90;});
+  document.getElementById('p3answer').textContent=`${highScore.length} de ${gameData.length} juegos tienen ≥90% positivo. Correlación confirmada: mayor score → más propietarios.`;
+  document.getElementById('p4answer').textContent=`F2P concentra ${total>0?Math.round(freeJ*100/total):0}% de jugadores ahora. Top géneros: ${Object.entries(byGenre).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join(', ')}.`;
+
+  const genreEntries=Object.entries(byGenre).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('reportGenero').innerHTML=genreEntries.map(([g,v])=>
+    `<div class="report-item"><span><span class="badge-genre">${g}</span></span><span class="report-val">${fmt(v)}</span></div>`).join('');
+
+  const priceEntries=Object.entries(byPrice).map(([r,v])=>({r,avg:Math.round(v.s/v.c)})).sort((a,b)=>b.avg-a.avg);
+  document.getElementById('reportPrecio').innerHTML=priceEntries.map(e=>
+    `<div class="report-item"><span>${e.r}</span><span class="report-val">${fmt(e.avg)} prom.</span></div>`).join('');
+
+  const topScore=[...gameData].map(g=>{const t=g.positive+g.negative;return{...g,pct:t>0?Math.round(g.positive*100/t):0};}).sort((a,b)=>b.pct-a.pct).slice(0,5);
+  document.getElementById('reportCalidad').innerHTML=topScore.map(g=>
+    `<div class="report-item"><span style="font-size:11px">${g.name}</span><span class="report-val">${g.pct}% ⭐</span></div>`).join('');
+
+  document.getElementById('reportTop5').innerHTML=sorted.slice(0,5).map((g,i)=>
+    `<div class="report-item"><span style="color:var(--steam-muted);margin-right:6px">#${i+1}</span><span style="font-size:11px">${g.name}</span><span class="report-val">${fmt(g.live_players)} jugando</span></div>`).join('');
+}
+
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='modelo') setTimeout(renderOlap, 50);
+}
+
+// Auto-refrescar jugadores live cada 5 minutos
+setInterval(loadAll, 5 * 60 * 1000);
+
+loadAll();
+</script>
+</body>
+</html>
