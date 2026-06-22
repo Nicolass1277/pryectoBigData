@@ -704,7 +704,7 @@ function renderKPIs(){
 
 function renderTable(){
   const tbody = document.getElementById('tableBody');
-  const sorted = [...gameData].sort((a,b)=>b.live_players-a.live_players).slice(0,15);
+  const sorted = [...gameData].sort((a,b)=>b.live_players-a.live_players);
   tbody.innerHTML = sorted.map((g,i)=>{
     const t=g.positive+g.negative;
     const pct=t>0?Math.round(g.positive*100/t):0;
