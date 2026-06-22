@@ -529,6 +529,26 @@ const GAMES = [
   {appid:'504230',name:'Celeste',              genre:'Platformer',positive:98,negative:2,  owners:'1,000,000 .. 2,000,000'},
   {appid:'1174180',name:'Red Dead Redemption 2',genre:'Action',  positive:93, negative:7,  owners:'5,000,000 .. 10,000,000'},
   {appid:'813780',name:'Age of Empires IV',    genre:'Strategy', positive:83, negative:17, owners:'5,000,000 .. 10,000,000'},
+  {appid:'271590',name:'Grand Theft Auto V',   genre:'Action',   positive:88, negative:12, owners:'50,000,000 .. 100,000,000'},
+  {appid:'359550',name:"Tom Clancy's Rainbow Six Siege",genre:'Action',positive:89,negative:11,owners:'30,000,000 .. 50,000,000'},
+  {appid:'205790',name:'Fallout 4',            genre:'RPG',      positive:81, negative:19, owners:'20,000,000 .. 50,000,000'},
+  {appid:'8930',  name:"Don't Starve Together",genre:'Adventure',positive:92, negative:8,  owners:'20,000,000 .. 50,000,000'},
+  {appid:'550',   name:'Left 4 Dead 2',        genre:'Action',   positive:88, negative:12, owners:'20,000,000 .. 50,000,000'},
+  {appid:'620',   name:'Portal 2',             genre:'Puzzle',   positive:97, negative:3,  owners:'20,000,000 .. 50,000,000'},
+  {appid:'238960',name:'Path of Exile',        genre:'Action',   positive:86, negative:14, owners:'20,000,000 .. 50,000,000'},
+  {appid:'582010',name:'Valheim',              genre:'Action',   positive:91, negative:9,  owners:'10,000,000 .. 20,000,000'},
+  {appid:'377160',name:'Dead by Daylight',      genre:'Horror',   positive:82, negative:18, owners:'20,000,000 .. 50,000,000'},
+  {appid:'105600',name:'The Elder Scrolls Online',genre:'RPG',   positive:78, negative:22, owners:'20,000,000 .. 50,000,000'},
+  {appid:'252950',name:'Rocket League',         genre:'Sports',   positive:89, negative:11, owners:'20,000,000 .. 50,000,000'},
+  {appid:'264710',name:'Subnautica',            genre:'Adventure',positive:97, negative:3,  owners:'5,000,000 .. 10,000,000'},
+  {appid:'242760',name:'The Forest',            genre:'Horror',   positive:91, negative:9,  owners:'10,000,000 .. 20,000,000'},
+  {appid:'1245620',name:'Horizon Zero Dawn',    genre:'Action',   positive:91, negative:9,  owners:'10,000,000 .. 20,000,000'},
+  {appid:'526870',name:'Death Stranding',       genre:'Action',   positive:88, negative:12, owners:'5,000,000 .. 10,000,000'},
+  {appid:'1250470',name:'Loop Hero',            genre:'Strategy', positive:95, negative:5,  owners:'2,000,000 .. 5,000,000'},
+  {appid:'304430',name:'Nioh 2',               genre:'Action',   positive:87, negative:13, owners:'2,000,000 .. 5,000,000'},
+  {appid:'305620',name:'The Long Dark',         genre:'Adventure',positive:93, negative:7,  owners:'5,000,000 .. 10,000,000'},
+  {appid:'262060',name:'Cities: Skylines',      genre:'Simulation',positive:96,negative:4,  owners:'10,000,000 .. 20,000,000'},
+  {appid:'49520', name:'Borderlands 2',         genre:'Action',   positive:90, negative:10, owners:'20,000,000 .. 50,000,000'},
 ];
 
 // Precios CLP de respaldo (en caso de que la API falle)
@@ -536,14 +556,24 @@ const PRICE_FALLBACK = {
   '730':0,'570':0,'1172470':0,'578080':29990,'1091500':49990,
   '1145360':20990,'413150':12990,'1086940':51490,'440':0,
   '252490':32990,'230410':0,'292030':32990,'504230':16990,
-  '1174180':49990,'813780':40990
+  '1174180':49990,'813780':40990,
+  '271590':49990,'359550':14990,'205790':19990,'8930':7990,
+  '550':12990,'620':9990,'238960':0,'582010':13990,
+  '377160':8990,'105600':14990,'252950':0,'264710':13990,
+  '242760':9990,'1245620':16990,'526870':14990,'1250470':8990,
+  '304430':20990,'305620':9990,'262060':9990,'49520':4990
 };
 // Jugadores live de respaldo
 const PLAYERS_FALLBACK = {
   '730':874523,'570':621845,'1172470':318240,'578080':289740,
   '1091500':198560,'1145360':118760,'413150':104200,'1086940':96800,
   '440':89500,'252490':82400,'230410':77200,'292030':44100,
-  '504230':48300,'1174180':29800,'813780':142300
+  '504230':48300,'1174180':29800,'813780':142300,
+  '271590':312000,'359550':65000,'205790':29000,'8930':26000,
+  '550':34000,'620':32000,'238960':70000,'582010':92000,
+  '377160':47000,'105600':41000,'252950':58000,'264710':22000,
+  '242760':24000,'1245620':38000,'526870':16000,'1250470':14500,
+  '304430':12500,'305620':18000,'262060':21000,'49520':30000
 };
 
 let gameData = [];
