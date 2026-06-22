@@ -579,6 +579,7 @@ const PLAYERS_FALLBACK = {
 let gameData = [];
 let charts = {};
 let sortDir = {};
+let currentSortKey = 'live_players';
 
 // ─────────────────────────────────────────────
 //  UTILIDADES
@@ -734,7 +735,13 @@ function renderKPIs(){
 
 function renderTable(){
   const tbody = document.getElementById('tableBody');
-  const sorted = [...gameData].sort((a,b)=>b.live_players-a.live_players);
+  const sorted = [...gameData];
+  if(currentSortKey){
+    sorted.sort((a,b)=>sortDir[currentSortKey]
+      ? b[currentSortKey] - a[currentSortKey]
+      : a[currentSortKey] - b[currentSortKey]
+    );
+  }
   tbody.innerHTML = sorted.map((g,i)=>{
     const t=g.positive+g.negative;
     const pct=t>0?Math.round(g.positive*100/t):0;
@@ -765,7 +772,8 @@ function renderTable(){
 }
 
 function sortTable(key){
-  sortDir[key]=!sortDir[key];
+  sortDir[key] = sortDir[key] === undefined ? true : !sortDir[key];
+  currentSortKey = key;
   gameData.sort((a,b)=>sortDir[key]?b[key]-a[key]:a[key]-b[key]);
   renderTable();
 }
