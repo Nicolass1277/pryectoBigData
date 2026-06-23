@@ -517,24 +517,39 @@ function doLogout() {
 // ════════════════════════════════════════
 //  STEAM API HELPERS
 // ════════════════════════════════════════
-const PROXIES = [
-  'https://corsproxy.io/?url=',
-  'https://api.allorigins.win/raw?url=',
-];
 const STEAM_API = 'https://api.steampowered.com';
 const IMG_BASE  = 'https://cdn.akamai.steamstatic.com/steam/apps';
+const IS_VERCEL = typeof window !== 'undefined' && (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('localhost'));
 
 async function steamFetch(url) {
-  const errors = [];
-  for (const proxy of PROXIES) {
-    try {
-      const res = await fetch(proxy + encodeURIComponent(url), { headers:{ 'x-cors-api-key':'temp_...', 'X-Requested-With':'XMLHttpRequest' } });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      return data;
-    } catch(e) { errors.push(e.message); }
+  try {
+    // En Vercel, usar backend serverless
+    if (IS_VERCEL && url.includes('api.steampowered.com')) {
+      const urlObj = new URL(url);
+      const endpoint = urlObj.pathname.replace('https://api.steampowered.com/', '');
+      const params = Object.fromEntries(urlObj.searchParams);
+      
+      const apiUrl = `/api/steam?endpoint=${encodeURIComponent(endpoint)}&${new URLSearchParams(params).toString()}`;
+      const res = await fetch(apiUrl);
+      if (!res.ok) throw new Error('API error');
+      return await res.json();
+    }
+    
+    // Local: usar proxies
+    const proxies = ['https://corsproxy.io/?url=', 'https://api.allorigins.win/raw?url='];
+    for (const proxy of proxies) {
+      try {
+        const res = await fetch(proxy + encodeURIComponent(url), { 
+          headers: {'x-cors-api-key':'temp_...', 'X-Requested-With':'XMLHttpRequest'}
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch(e) { continue; }
+    }
+    throw new Error('Todos los proxies fallaron');
+  } catch(e) {
+    throw new Error('No se pudo conectar con Steam API: ' + e.message);
   }
-  throw new Error('No se pudo conectar con Steam API: ' + errors.join(' | '));
 }
 
 async function resolveId(raw) {
