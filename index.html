@@ -433,6 +433,7 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch(e){}
   }
   loadAnalyticsContent();
+  loadPublicGames();
 });
 
 // ════════════════════════════════════════
@@ -454,6 +455,7 @@ function skipLogin() {
   document.getElementById('app').style.display = 'flex';
   document.getElementById('analytics-back-btn').style.display = 'inline-flex';
   document.getElementById('analytics-exit-nav').style.display = 'inline-flex';
+  renderAnalyticsPublic();
 }
 
 function returnToLogin() {
@@ -641,7 +643,8 @@ async function loadPublicGames() {
     publicData.topGames = results.filter(r => r.players !== null).sort((a,b) => b.players - a.players);
     console.log('[loadPublicGames] Top games filtrados:', publicData.topGames);
     
-    if(isLoggedIn) {
+    renderAnalyticsPublic();
+    if (isLoggedIn) {
       console.log('[loadPublicGames] Usuario logueado, renderizando comparativa...');
       renderComparativa();
     } else {
@@ -687,69 +690,104 @@ async function fetchLivePlayers(appid) {
 // ════════════════════════════════════════
 function loadAnalyticsContent() {
   const html = `
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
-      <button id="analytics-back-btn" class="nav-tab" style="display:none;padding:8px 14px;" onclick="returnToLogin()">← Volver al login</button>
-      <div class="status-bar" style="flex:1 1 auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
-          <div style="width:8px;height:8px;border-radius:50%;background:var(--steam-green-light)"></div>
-          <span>📊 Steam Analytics público — Big Data Unidad III</span>
+    <div class="status-bar" style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:13px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--steam-teal)"></div>
+        <div>
+          <div style="font-weight:700;color:#fff;">Steam Analytics público</div>
+          <div style="font-size:12px;color:var(--muted);">Visualización de top games y jugadores en vivo</div>
         </div>
+      </div>
+      <button id="analytics-back-btn" class="mode-btn" style="display:none;padding:8px 14px;">← Volver al login</button>
+    </div>
 
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.4rem;margin-bottom:2rem;">
-      <div style="font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:4px;">📊 Modelos Disponibles</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:1rem;">Análisis multidimensional del ecosistema de juegos en Steam</div>
-      
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
-        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de Top 10 jugadores ahora')">
-          <div class="card-title">🎮 Top 10 Juegos en Vivo</div>
-          <div class="card-sub">Jugadores concurrentes en tiempo real</div>
-          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
-        </div>
-        
-        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de distribución por género')">
-          <div class="card-title">🏷️ Distribución por Género</div>
-          <div class="card-sub">¿Qué géneros concentran más jugadores?</div>
-          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
-        </div>
-
-        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de estrategia de precios')">
-          <div class="card-title">💰 Estrategia de Precios CLP</div>
-          <div class="card-sub">Rango de precio vs. retención de jugadores</div>
-          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
-        </div>
-
-        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de calidad de reseñas')">
-          <div class="card-title">⭐ Calidad vs. Popularidad</div>
-          <div class="card-sub">Score de reseñas en top juegos</div>
-          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
-        </div>
-
-        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Modelo OLAP interactivo')">
-          <div class="card-title">📐 Modelo Multidimensional</div>
-          <div class="card-sub">Esquema estrella + consultas OLAP</div>
-          <div style="color:var(--steam-teal);font-size:12px;">→ Ver modelo</div>
-        </div>
-
-        <div class="card" style="cursor:pointer;border:1px solid var(--border);opacity:0.7;">
-          <div class="card-title">🔌 Fuentes de Datos</div>
-          <div class="card-sub">Steam Web API + Steam Store API</div>
-          <div style="color:var(--steam-teal);font-size:12px;">Datos públicos en vivo</div>
-        </div>
+    <div class="grid-2" style="gap:18px;margin-bottom:22px;">
+      <div class="card">
+        <div class="card-title">🎮 Top 10 juegos con más jugadores</div>
+        <div class="card-sub">Cifras en vivo desde Steam Web API</div>
+        <div id="public-top-games" style="margin-top:16px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 Jugadores concurrentes</div>
+        <div class="card-sub">Comparativa de los top games ahora mismo</div>
+        <div class="chart-wrap" style="min-height:280px;margin-top:16px;"><canvas id="publicTopChart"></canvas></div>
       </div>
     </div>
 
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.4rem;">
-      <div style="font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:12px;">ℹ️ Sobre este análisis</div>
-      <div style="font-size:12px;color:var(--muted);line-height:1.8;">
-        <p>🎓 <strong>Instituto Profesional Santo Tomás</strong> — Evaluación Final Big Data Unidad III</p>
-        <p>👥 <strong>Estudiantes:</strong> Nicolás Rojas · Mario Zepeda</p>
-        <p>📅 <strong>Fecha:</strong> 21 de junio de 2026</p>
-        <p>🏗️ <strong>Arquitectura:</strong> SQLite + Pandas (ETL) → Modelo Estrella → Visualización HTML/Chart.js</p>
-        <p>🔌 <strong>APIs públicas:</strong> Steam Web API (jugadores en vivo) + Steam Store API (precios CLP)</p>
+    <div class="grid-2" style="gap:18px;margin-bottom:22px;">
+      <div class="card">
+        <div class="card-title">📌 Insight rápido</div>
+        <div class="card-sub">Lo que muestra la comunidad ahora</div>
+        <div id="public-insights" style="margin-top:16px;color:var(--text);font-size:13px;line-height:1.6;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔑 Conecta tu cuenta</div>
+        <div class="card-sub">Compara tus horas con la comunidad global</div>
+        <div style="margin-top:16px;color:var(--muted);font-size:13px;line-height:1.7;">
+          <p>Al iniciar sesión aparecen:</p>
+          <ul style="padding-left:18px;margin-top:8px;">
+            <li>✔ Comparativa TUS juegos vs top global</li>
+            <li>✔ Juegos comunes en tu biblioteca</li>
+            <li>✔ Gráficos con tus horas y jugadores en vivo</li>
+          </ul>
+        </div>
       </div>
     </div>
   `;
   document.getElementById('analytics-content').innerHTML = html;
+}
+
+function renderAnalyticsPublic() {
+  const target = document.getElementById('public-top-games');
+  if (!target) return;
+
+  if (!publicData.topGames.length) {
+    target.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><p>Cargando datos públicos…</p></div>';
+    document.getElementById('public-insights').innerHTML = '<p style="color:var(--muted);">Esperando datos de Steam Web API.</p>';
+    return;
+  }
+
+  const topList = publicData.topGames.slice(0, 6).map((game, idx) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">${idx+1}. ${game.name}</span>
+      <span style="font-size:13px;color:var(--steam-teal);font-weight:700;">${game.players?.toLocaleString('es-CL') || '0'}</span>
+    </div>
+  `).join('');
+
+  target.innerHTML = topList;
+
+  const ctx = document.getElementById('publicTopChart')?.getContext('2d');
+  destroyChart('publicTopChart');
+  if (ctx) {
+    charts.publicTopChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: publicData.topGames.slice(0, 6).map(g => g.name.length > 18 ? g.name.slice(0, 16) + '…' : g.name),
+        datasets: [{
+          label: 'Jugadores ahora',
+          data: publicData.topGames.slice(0, 6).map(g => g.players || 0),
+          backgroundColor: 'rgba(102,192,244,0.8)',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#c7d5e0', font: { size: 11 } }, grid: { display: false } },
+          y: { ticks: { color: '#c7d5e0', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.08)' } }
+        }
+      }
+    });
+  }
+
+  const topGame = publicData.topGames[0];
+  const secondGame = publicData.topGames[1];
+  document.getElementById('public-insights').innerHTML = `
+    <p>Top del momento: <strong>${topGame.name}</strong> con <strong>${topGame.players.toLocaleString('es-CL')}</strong> jugadores simultáneos.</p>
+    <p>El segundo juego más jugado es <strong>${secondGame.name}</strong>, lo que muestra que el top global se concentra en pocos títulos con audiencia masiva.</p>
+  `;
 }
 
 // ════════════════════════════════════════
