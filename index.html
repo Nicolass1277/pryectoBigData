@@ -3,971 +3,980 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Steam Analytics — Big Data Unidad III</title>
+<title>Steam Unified — Analytics & Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --steam-dark: #1b2838;
-    --steam-blue: #1a9fff;
-    --steam-teal: #66c0f4;
-    --steam-green-light: #a4d007;
-    --steam-gray: #c6d4df;
-    --steam-panel: #16202d;
-    --steam-panel2: #1e2d3e;
-    --steam-border: #2a475e;
-    --steam-text: #c6d4df;
-    --steam-muted: #8f98a0;
-    --steam-white: #ffffff;
-    --steam-red: #e74c3c;
-    --steam-orange: #f39c12;
-    --steam-purple: #9b59b6;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; background: var(--steam-dark); color: var(--steam-text); font-size: 14px; line-height: 1.5; }
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0e1621;--surface:#1a2332;--surface2:#223044;--border:#1f2e42;
+  --blue:#1a9fff;--bdim:rgba(26,159,255,.14);--green:#4ade80;
+  --gold:#fbbf24;--red:#f87171;--text:#c7d5e0;--muted:#68788a;
+  --steam-dark:#1b2838;--steam-teal:#66c0f4;--steam-gray:#c6d4df;
+}
+html,body{margin:0;padding:0;width:100%;height:100%}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh}
 
-  nav {
-    background: linear-gradient(to bottom, #0d1a26, #1b2838);
-    border-bottom: 1px solid var(--steam-border);
-    padding: 0 2rem;
-    display: flex; align-items: center; justify-content: space-between;
-    height: 56px; position: sticky; top: 0; z-index: 100;
-  }
-  .nav-brand { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: var(--steam-white); }
-  .nav-logo { width:32px;height:32px;background:var(--steam-blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px; }
-  .nav-badge { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:4px;padding:4px 10px;font-size:11px;color:var(--steam-muted); }
-  .nav-links { display:flex;gap:4px; }
-  .nav-link { color:var(--steam-muted);text-decoration:none;padding:8px 14px;border-radius:4px;font-size:13px;transition:all 0.15s;cursor:pointer;border:none;background:none; }
-  .nav-link:hover,.nav-link.active { background:rgba(102,192,244,0.15);color:var(--steam-teal); }
+/* ── LOADER ── */
+#loader{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;transition:opacity .4s}
+#loader.hide{opacity:0;pointer-events:none}
+.loader-ring{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{color:var(--muted);font-size:13px}
 
-  .hero { background:linear-gradient(135deg,#0d1a26,#1b2838,#1e2d3e);border-bottom:1px solid var(--steam-border);padding:2.5rem 2rem;position:relative;overflow:hidden; }
-  .hero::before { content:'';position:absolute;top:-60px;right:-60px;width:280px;height:280px;background:radial-gradient(circle,rgba(26,159,255,0.08),transparent 70%);border-radius:50%; }
-  .hero-content { max-width:1280px;margin:0 auto; }
-  .hero-eyebrow { font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--steam-teal);margin-bottom:.5rem; }
-  .hero h1 { font-size:28px;font-weight:700;color:var(--steam-white);margin-bottom:.5rem; }
-  .hero h1 span { color:var(--steam-teal); }
-  .hero-sub { color:var(--steam-muted);font-size:14px;margin-bottom:1.5rem; }
-  .hero-meta { display:flex;gap:1rem;flex-wrap:wrap; }
-  .meta-chip { background:rgba(255,255,255,0.06);border:1px solid var(--steam-border);border-radius:20px;padding:4px 14px;font-size:12px;color:var(--steam-gray);display:flex;align-items:center;gap:6px; }
-  .dot { width:6px;height:6px;border-radius:50%;background:var(--steam-green-light);animation:pulse 2s infinite; }
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* ── LOGIN SCREEN ── */
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 0%,rgba(26,159,255,.08) 0%,transparent 70%);padding:24px}
+.login-box{width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:36px}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+.login-logo-text{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#fff}
+.login-logo-text span{color:var(--blue)}
+.login-title{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#fff;text-align:center;margin-bottom:6px}
+.login-sub{color:var(--muted);font-size:13px;text-align:center;margin-bottom:28px;line-height:1.6}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.field input{width:100%;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:#fff;font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
+.field input:focus{border-color:var(--blue)}
+.field input::placeholder{color:var(--muted)}
+.help-link{font-size:11px;color:var(--blue);text-decoration:none;display:block;margin-top:4px}
+.help-link:hover{text-decoration:underline}
+.login-btn{width:100%;padding:13px;border-radius:8px;border:none;background:linear-gradient(135deg,#1a9fff,#0d6abf);color:#fff;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .15s;margin-top:6px}
+.login-btn:hover{opacity:.9}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{color:var(--red);font-size:12px;text-align:center;margin-top:12px;display:none}
+.divider{border:none;border-top:1px solid var(--border);margin:24px 0}
+.how-to{background:var(--surface2);border-radius:8px;padding:16px}
+.how-to-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.how-step{font-size:12px;color:var(--muted);margin-bottom:6px;padding-left:16px;position:relative;line-height:1.5}
+.how-step::before{content:'→';position:absolute;left:0;color:var(--blue)}
+.how-step a{color:var(--blue);text-decoration:none}
+.how-step a:hover{text-decoration:underline}
 
-  .main { max-width:1280px;margin:0 auto;padding:2rem; }
+/* ── APP LAYOUT ── */
+#app{display:none;flex-direction:column;height:100vh}
 
-  .section-tabs { display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:1px solid var(--steam-border); }
-  .tab-btn { background:none;border:none;border-bottom:2px solid transparent;color:var(--steam-muted);font-size:13px;padding:10px 18px 12px;cursor:pointer;transition:all .15s;margin-bottom:-1px; }
-  .tab-btn:hover { color:var(--steam-gray); }
-  .tab-btn.active { color:var(--steam-teal);border-bottom-color:var(--steam-teal); }
-  .tab-panel { display:none; }
-  .tab-panel.active { display:block; }
+/* ── MAIN NAV (always visible) ── */
+.main-nav{height:58px;background:#111c2a;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:0;z-index:200}
+.nav-brand{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:#fff;margin-right:32px;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.nav-brand span{color:var(--blue)}
+.nav-mode-selector{display:flex;gap:4px;margin-right:auto}
+.mode-btn{padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.mode-btn.active{color:#fff;background:var(--bdim);border-color:rgba(26,159,255,.25)}
+.mode-btn:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.nav-avatar{width:30px;height:30px;border-radius:50%;border:2px solid var(--blue);object-fit:cover}
+.nav-username{font-size:13px;font-weight:600;color:#fff}
+.logout-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
 
-  .status-bar { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:6px;padding:10px 16px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px; }
-  .status-left { display:flex;align-items:center;gap:10px;font-size:12px; }
-  .status-dot { width:8px;height:8px;border-radius:50%;background:var(--steam-green-light); }
-  .status-dot.loading { background:var(--steam-orange);animation:pulse 1s infinite; }
-  .status-dot.error { background:var(--steam-red); }
-  .btn-reload { background:rgba(26,159,255,0.15);border:1px solid rgba(26,159,255,0.4);color:var(--steam-teal);border-radius:4px;padding:5px 14px;font-size:12px;cursor:pointer;transition:all .15s; }
-  .btn-reload:hover { background:rgba(26,159,255,0.25); }
+/* ── MODE-SPECIFIC NAV ── */
+.mode-nav{height:58px;background:transparent;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:0}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.04)}
+.nav-tab.active{color:#fff;background:var(--bdim);border:1px solid rgba(26,159,255,.25)}
 
-  .kpi-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:1.5rem; }
-  .kpi-card { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.2rem 1.4rem;position:relative;overflow:hidden; }
-  .kpi-card::before { content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--kpi-color,var(--steam-blue)); }
-  .kpi-label { font-size:11px;color:var(--steam-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px; }
-  .kpi-value { font-size:24px;font-weight:700;color:var(--steam-white); }
-  .kpi-sub { font-size:11px;color:var(--steam-muted);margin-top:4px; }
-  .kpi-live { font-size:10px;color:var(--steam-green-light);margin-top:2px; }
+/* ── CONTENT AREA ── */
+.app-content{flex:1;overflow-y:auto}
 
-  .chart-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px; }
-  @media(max-width:768px){.chart-grid{grid-template-columns:1fr;}}
-  .chart-panel { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.4rem; }
-  .chart-title { font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:4px; }
-  .chart-subtitle { font-size:11px;color:var(--steam-muted);margin-bottom:1rem; }
-  .chart-wrap { position:relative;height:260px; }
+/* ── MODE CONTAINERS ── */
+.mode-content{display:none;width:100%;height:100%}
+.mode-content.active{display:block}
 
-  .data-table { width:100%;border-collapse:collapse;font-size:12px; }
-  .data-table th { background:var(--steam-panel2);color:var(--steam-muted);font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--steam-border);cursor:pointer;user-select:none; }
-  .data-table th:hover { color:var(--steam-teal); }
-  .data-table td { padding:9px 12px;border-bottom:1px solid rgba(42,71,94,0.5);color:var(--steam-text); }
-  .data-table tr:hover td { background:rgba(255,255,255,0.03); }
-  .badge { display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600; }
-  .badge-free { background:rgba(76,107,34,0.4);color:var(--steam-green-light);border:1px solid rgba(164,208,7,0.3); }
-  .badge-paid { background:rgba(26,159,255,0.15);color:var(--steam-teal);border:1px solid rgba(26,159,255,0.3); }
-  .badge-genre { background:rgba(155,89,182,0.2);color:#c39bd3;border:1px solid rgba(155,89,182,0.3);margin:1px;font-size:10px;padding:2px 6px;border-radius:8px;display:inline-block; }
-  .score-bar { height:4px;border-radius:2px;background:rgba(255,255,255,0.1);overflow:hidden;margin-top:3px; }
-  .score-fill { height:100%;border-radius:2px; }
-  .live-badge { display:inline-flex;align-items:center;gap:4px;background:rgba(164,208,7,0.15);border:1px solid rgba(164,208,7,0.3);border-radius:10px;padding:2px 8px;font-size:10px;color:var(--steam-green-light); }
-  .live-dot { width:5px;height:5px;border-radius:50%;background:var(--steam-green-light);animation:pulse 1.5s infinite; }
+/* Analytics Mode */
+#analytics-mode{background:var(--steam-dark)}
+.analytics-main{max-width:1280px;margin:0 auto;padding:2rem}
 
-  /* Modelo estrella */
-  .star-model { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.5rem;margin-bottom:16px; }
-  .star-grid { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:1rem; }
-  @media(max-width:640px){.star-grid{grid-template-columns:1fr;}}
-  .dim-card { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:6px;padding:12px; }
-  .dim-card.fact-card { grid-column:1/-1;border-color:rgba(26,159,255,0.5);background:rgba(26,159,255,0.05); }
-  .dim-title { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:6px; }
-  .dim-title.fact { color:var(--steam-teal); }
-  .dim-title.dim { color:#c39bd3; }
-  .dim-col { font-size:11px;color:var(--steam-muted);padding:2px 0;border-bottom:1px solid rgba(42,71,94,0.5); }
-  .dim-col:last-child { border-bottom:none; }
-  .pk { color:var(--steam-orange) !important; }
-  .fk { color:var(--steam-teal) !important; }
-  .measure { color:var(--steam-green-light) !important; }
+/* Scope Mode */
+#scope-mode{}
+main{max-width:1300px;margin:0 auto;padding:28px 24px}
+.view{display:none}
+.view.active{display:block}
+.view-title{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
+.view-sub{color:var(--muted);font-size:13px;margin-bottom:24px}
 
-  .report-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
-  @media(max-width:640px){.report-grid{grid-template-columns:1fr;}}
-  .report-card { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1.2rem; }
-  .report-card h3 { font-size:13px;color:var(--steam-gray);margin-bottom:4px; }
-  .report-card .report-meta { font-size:11px;color:var(--steam-muted);margin-bottom:10px; }
-  .report-item { display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(42,71,94,0.4);font-size:12px; }
-  .report-item:last-child { border-bottom:none; }
-  .report-val { color:var(--steam-teal);font-weight:600; }
+/* ── SHARED COMPONENTS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;color:#fff;margin-bottom:4px}
+.card-sub{font-size:11px;color:var(--muted);margin-bottom:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:18px 20px}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+.kpi-val{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#fff;line-height:1}
+.kpi-val small{font-size:14px;color:var(--blue);margin-left:4px}
+.chart-wrap{position:relative;height:240px}
 
-  .question-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem; }
-  @media(max-width:640px){.question-grid{grid-template-columns:1fr;}}
-  .question-card { background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1rem;display:flex;gap:12px;align-items:flex-start; }
-  .q-num { width:28px;height:28px;background:rgba(26,159,255,0.15);border:1px solid rgba(26,159,255,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--steam-teal);flex-shrink:0; }
-  .q-text { font-size:12px;color:var(--steam-gray);line-height:1.5; }
-  .q-answer { font-size:11px;color:var(--steam-muted);margin-top:4px; }
+/* Profile specific */
+.profile-hero{background:linear-gradient(135deg,var(--surface) 0%,#112233 100%);border:1px solid var(--border);border-radius:12px;padding:28px;display:flex;align-items:center;gap:24px;margin-bottom:24px}
+.profile-avatar{width:80px;height:80px;border-radius:10px;border:3px solid var(--blue);object-fit:cover}
+.profile-name{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:4px}
+.profile-state{font-size:13px;margin-bottom:10px}
+.state-online{color:var(--green)}
+.state-offline{color:var(--muted)}
+.profile-url{color:var(--blue);font-size:12px;text-decoration:none}
+.profile-url:hover{text-decoration:underline}
+.profile-stats{margin-left:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center}
+.ps-item{background:var(--surface2);border-radius:8px;padding:14px 20px}
+.ps-val{font-family:'Space Grotesk',sans-serif;font-size:24px;font-weight:700;color:#fff;margin-bottom:2px}
+.ps-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
 
-  .env-grid { display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem; }
-  @media(max-width:640px){.env-grid{grid-template-columns:1fr;}}
-  .env-card { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:8px;padding:1.2rem; }
-  .env-card.chosen { border-color:rgba(164,208,7,0.5);background:rgba(164,208,7,0.05); }
-  .env-title { font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:8px; }
-  .env-point { font-size:11px;color:var(--steam-muted);padding:3px 0;display:flex;gap:6px; }
-  .env-point::before { content:'✓';color:var(--steam-green-light);flex-shrink:0; }
-  .env-point.x::before { content:'✗';color:var(--steam-red); }
+/* Game rows */
+.game-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.game-row:last-child{border-bottom:none}
+.game-row-num{font-size:12px;color:var(--muted);font-weight:700;width:22px;text-align:right}
+.game-thumb{width:46px;height:22px;border-radius:4px;object-fit:cover;background:var(--surface2)}
+.game-row-name{flex:1;font-size:13px;color:#fff;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.game-row-time{font-size:12px;color:var(--muted);white-space:nowrap}
+.game-row-time strong{color:var(--blue)}
+.playtime-bar-wrap{width:80px}
+.playtime-bar{height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.playtime-fill{height:100%;background:linear-gradient(90deg,var(--blue),#4ade80);border-radius:2px}
 
-  .flow-steps { display:flex;gap:0;align-items:center;flex-wrap:wrap;margin:1rem 0;background:var(--steam-panel);border:1px solid var(--steam-border);border-radius:8px;padding:1rem; }
-  .flow-step { background:var(--steam-panel2);border:1px solid var(--steam-border);border-radius:6px;padding:8px 14px;font-size:12px;color:var(--steam-gray);text-align:center;flex:1;min-width:80px; }
-  .flow-step .step-num { font-size:10px;color:var(--steam-teal);margin-bottom:2px; }
-  .flow-arrow { color:var(--steam-muted);font-size:16px;padding:0 4px;flex-shrink:0; }
+/* Recent grids */
+.recent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.recent-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:transform .15s,border-color .15px;cursor:pointer}
+.recent-card:hover{transform:translateY(-2px);border-color:var(--blue)}
+.recent-card img{width:100%;height:94px;object-fit:cover;background:var(--surface2)}
+.recent-card-body{padding:10px 12px}
+.recent-card-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-card-time{font-size:11px;color:var(--muted)}
+.recent-card-time strong{color:var(--green)}
 
-  .progress-wrap { margin:8px 0; }
-  .progress-label { display:flex;justify-content:space-between;font-size:11px;color:var(--steam-muted);margin-bottom:3px; }
-  .progress-bar { height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden; }
-  .progress-fill { height:100%;border-radius:3px;background:var(--steam-teal); }
+/* Library */
+.lib-controls{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.lib-search{flex:1;min-width:180px;max-width:280px;padding:8px 12px 8px 32px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:#fff;font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color .15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2368788a' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center}
+.lib-search:focus{border-color:var(--blue)}
+.lib-search::placeholder{color:var(--muted)}
+.lib-sort{padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;cursor:pointer}
+.lib-count{font-size:12px;color:var(--muted);margin-left:auto}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.lib-card{background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;transition:transform .1s,border-color .1s;cursor:pointer}
+.lib-card:hover{transform:translateY(-2px);border-color:var(--blue)}
+.lib-card img{width:100%;height:75px;object-fit:cover;background:var(--surface2);display:block}
+.lib-card-body{padding:8px 10px}
+.lib-card-name{font-size:12px;font-weight:600;color:#fff;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lib-card-hrs{font-size:11px;color:var(--muted)}
+.lib-card-hrs strong{color:var(--blue)}
+.lib-card-badge{display:inline-block;font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.2);margin-top:4px}
 
-  footer { background:var(--steam-panel);border-top:1px solid var(--steam-border);padding:1.5rem 2rem;margin-top:2rem;text-align:center;font-size:11px;color:var(--steam-muted); }
-  footer strong { color:var(--steam-gray); }
+/* Comparison View */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px}
+#compareChart{max-height:280px}
+.common-games-section{grid-column:1/-1}
+.game-row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.03);margin-bottom:8px;transition:background .15s}
+.game-row:hover{background:rgba(255,255,255,.04)}
+.game-row-num{flex:0 0 24px;text-align:center;font-size:16px}
+.game-thumb{flex:0 0 40px;width:40px;height:40px;border-radius:5px;object-fit:cover;background:var(--surface2)}
+.game-row-name{flex:1;font-weight:600;color:#fff;font-size:13px}
+.game-row-time{flex:0 0 200px;font-size:11px;color:var(--muted);text-align:right}
+.game-row-time strong{color:#fff}
 
-  .spinner { width:24px;height:24px;border:2px solid rgba(102,192,244,0.2);border-top-color:var(--steam-teal);border-radius:50%;animation:spin .8s linear infinite;display:inline-block;vertical-align:middle;margin-right:8px; }
-  @keyframes spin{to{transform:rotate(360deg)}}
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;width:500px;max-width:92vw;padding:24px;position:relative;transform:translateY(8px);transition:transform .2s}
+.overlay.open .modal{transform:translateY(0)}
+.modal-close{position:absolute;top:12px;right:12px;background:var(--surface2);border:none;color:var(--muted);width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{color:#fff}
+.modal-img{width:100%;border-radius:8px;object-fit:cover;height:140px;margin-bottom:16px;background:var(--surface2)}
+.modal-name{font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:14px}
+.modal-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.ms{background:var(--surface2);border-radius:7px;padding:10px;text-align:center}
+.ms-val{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:2px}
+.ms-label{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
 
-  .api-source-tag { font-size:10px;padding:2px 7px;border-radius:8px;border:1px solid;margin-left:4px; }
-  .tag-live { background:rgba(164,208,7,0.1);color:var(--steam-green-light);border-color:rgba(164,208,7,0.3); }
-  .tag-cache { background:rgba(243,156,18,0.1);color:var(--steam-orange);border-color:rgba(243,156,18,0.3); }
+/* Data Table */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{padding:12px;text-align:left;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.05);font-weight:600;color:var(--text);text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+.data-table td{padding:12px;vertical-align:middle}
+.data-table tr:hover{background:rgba(255,255,255,.02)}
 
-  .olap-controls { display:flex;gap:12px;flex-wrap:wrap;margin:1rem 0; }
-  .olap-controls label { font-size:11px;color:var(--steam-muted);display:block;margin-bottom:4px; }
-  .olap-controls select { background:var(--steam-panel2);border:1px solid var(--steam-border);color:var(--steam-gray);border-radius:4px;padding:6px 10px;font-size:12px; }
+/* Empty state */
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+
+/* Utilities */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+
+@media(max-width:900px){
+  .grid-2,.grid-3,.kpi-row,.profile-stats{grid-template-columns:1fr}
+  .profile-hero{flex-direction:column;text-align:center}
+  .profile-stats{margin-left:0}
+  .nav-mode-selector{display:none}
+}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-brand">
-    <div class="nav-logo">🎮</div>
-    Steam Analytics
-  </div>
-  <div style="display:flex;gap:12px;align-items:center;">
-    <div class="nav-links">
-      <button class="nav-link active" onclick="switchTab('dashboard',this)">Dashboard</button>
-      <button class="nav-link" onclick="switchTab('modelo',this)">Modelo OLAP</button>
-      <button class="nav-link" onclick="switchTab('reportes',this)">Reportes</button>
-      <button class="nav-link" onclick="switchTab('entorno',this)">Entorno</button>
-    </div>
-    <div class="nav-badge">Big Data · Unidad III</div>
-  </div>
-</nav>
+<!-- LOADER -->
+<div id="loader"><div class="loader-ring"></div><div class="loader-text">Iniciando Steam Unified…</div></div>
 
-<div class="hero">
-  <div class="hero-content">
-    <div class="hero-eyebrow">Instituto Profesional Santo Tomás · Evaluación Final</div>
-    <h1>Análisis Multidimensional del<br><span>Ecosistema Steam</span></h1>
-    <div class="hero-sub">Prototipo Big Data · Steam Web API (jugadores en tiempo real) + Steam Store API (precios CLP) · Nicolás Rojas / Mario Zepeda · 21-06-2026</div>
-    <div class="hero-meta">
-      <div class="meta-chip"><div class="dot"></div> Jugadores en vivo · Steam Web API</div>
-      <div class="meta-chip">💰 Precios en CLP · cc=cl</div>
-      <div class="meta-chip">🗄️ Entorno Local · SQLite + Jupyter</div>
-      <div class="meta-chip">📐 Esquema Estrella</div>
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="13" stroke="#1a9fff" stroke-width="1.5"/><path d="M7 14a7 7 0 0 1 7-7 7 7 0 0 1 7 7" stroke="#1a9fff" stroke-width="1.8" stroke-linecap="round"/><circle cx="11.5" cy="17" r="3" fill="#1a9fff"/><path d="M8.5 17 6 20" stroke="#c7d5e0" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div class="login-logo-text">Steam<span>Scope</span></div>
+    </div>
+    <div class="login-title">Conecta tu cuenta de Steam</div>
+    <div class="login-sub">Analiza tu biblioteca, horas jugadas y estadísticas personales en tiempo real.</div>
+
+    <div class="field">
+      <label>Steam API Key (opcional)</label>
+      <input type="password" id="inp-key" placeholder="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+      <a class="help-link" href="https://steamcommunity.com/dev/apikey" target="_blank">→ Obtener gratis en steamcommunity.com/dev/apikey</a>
+    </div>
+    <div class="field">
+      <label>Steam ID o URL de perfil (opcional)</label>
+      <input type="text" id="inp-id" placeholder="76561198xxxxxxxxx  o  /id/tunombre/">
+      <a class="help-link" href="https://steamid.io" target="_blank">→ Buscar tu SteamID64 en steamid.io</a>
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Conectar con Steam</button>
+    <div class="login-error" id="login-error"></div>
+
+    <hr class="divider">
+    
+    <button class="login-btn" style="background:rgba(26,159,255,0.3);margin-top:10px" onclick="skipLogin()">→ Ver Analytics público (sin login)</button>
+
+    <hr class="divider">
+    <div class="how-to">
+      <div class="how-to-title">¿Cómo obtener tus credenciales?</div>
+      <div class="how-step"><a href="https://steamcommunity.com/dev/apikey" target="_blank">Ir a steamcommunity.com/dev/apikey</a>, iniciar sesión y copiar tu API Key</div>
+      <div class="how-step"><a href="https://steamid.io" target="_blank">Ir a steamid.io</a>, buscar tu perfil y copiar el <strong>SteamID64</strong> (número de 17 dígitos)</div>
+      <div class="how-step">Pegar ambos arriba y hacer clic en <strong>Conectar</strong></div>
+      <div class="how-step" style="color:#68788a;font-size:11px;margin-top:6px">🔒 Tus credenciales sólo se guardan en tu navegador (localStorage) y nunca se envían a ningún servidor.</div>
     </div>
   </div>
 </div>
 
-<div class="main">
-
-  <div class="status-bar">
-    <div class="status-left">
-      <div class="status-dot loading" id="statusDot"></div>
-      <span id="statusText">Iniciando carga de datos...</span>
+<!-- APP -->
+<div id="app">
+  <!-- MAIN NAV -->
+  <nav class="main-nav">
+    <div class="nav-brand">Steam<span>Unified</span></div>
+    <div class="nav-mode-selector">
+      <button class="mode-btn active" onclick="switchMode('analytics')">📊 Analytics</button>
+      <button class="mode-btn" id="profile-mode-btn" onclick="switchMode('scope')" style="display:none">👤 Mi Perfil</button>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <span id="lastUpdate" style="font-size:11px;color:var(--steam-muted);"></span>
-      <button class="btn-reload" onclick="loadAll()">↺ Actualizar ahora</button>
+    <div class="nav-right" id="nav-right-profile" style="display:none">
+      <img class="nav-avatar" id="nav-avatar" src="" alt="">
+      <span class="nav-username" id="nav-username"></span>
+      <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
     </div>
-  </div>
+  </nav>
 
-  <!-- ===== TAB: DASHBOARD ===== -->
-  <div id="tab-dashboard" class="tab-panel active">
-
-    <div class="kpi-grid">
-      <div class="kpi-card" style="--kpi-color:#66c0f4">
-        <div class="kpi-label">Juegos analizados</div>
-        <div class="kpi-value" id="kpi-juegos">—</div>
-        <div class="kpi-sub">Top activos quincena</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:#a4d007">
-        <div class="kpi-label">Jugadores ahora</div>
-        <div class="kpi-value" id="kpi-jugadores">—</div>
-        <div class="kpi-live" id="kpi-live-label">⬤ Steam Web API en vivo</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:#f39c12">
-        <div class="kpi-label">% Free-to-Play</div>
-        <div class="kpi-value" id="kpi-free">—</div>
-        <div class="kpi-sub">Del total de jugadores</div>
-      </div>
-      <div class="kpi-card" style="--kpi-color:#9b59b6">
-        <div class="kpi-label">Score positivo prom.</div>
-        <div class="kpi-value" id="kpi-score">—</div>
-        <div class="kpi-sub">Reseñas top juegos</div>
+  <!-- CONTENT AREA -->
+  <div class="app-content">
+    <!-- ANALYTICS MODE -->
+    <div id="analytics-mode" class="mode-content active">
+      <div class="analytics-main" id="analytics-content">
+        <!-- Contenido de Analytics se cargará aquí -->
       </div>
     </div>
 
-    <div class="chart-grid">
-      <div class="chart-panel">
-        <div class="chart-title">Top 10 — Jugadores concurrentes ahora <span class="api-source-tag tag-live" id="tagTop10">LIVE</span></div>
-        <div class="chart-subtitle">¿Cuáles son los juegos más activos en este momento? (P1)</div>
-        <div class="chart-wrap"><canvas id="chartTop10"></canvas></div>
-      </div>
-      <div class="chart-panel">
-        <div class="chart-title">Distribución por género</div>
-        <div class="chart-subtitle">¿Qué géneros concentran más jugadores? (P1)</div>
-        <div class="chart-wrap"><canvas id="chartGenero"></canvas></div>
-      </div>
-    </div>
+    <!-- SCOPE MODE -->
+    <div id="scope-mode" class="mode-content">
+      <!-- MODE NAV para Scope -->
+      <nav class="mode-nav">
+        <div class="nav-tabs">
+          <button class="nav-tab active" onclick="switchTab('perfil')">Mi Perfil</button>
+          <button class="nav-tab" onclick="switchTab('comparativa')" id="comparativa-tab" style="display:none">🌍 Vs Comunidad</button>
+          <button class="nav-tab" onclick="switchTab('recientes')">Recientes</button>
+          <button class="nav-tab" onclick="switchTab('biblioteca')">Biblioteca</button>
+          <button class="nav-tab" onclick="switchTab('estadisticas')">Estadísticas</button>
+        </div>
+      </nav>
 
-    <div class="chart-grid">
-      <div class="chart-panel">
-        <div class="chart-title">Rango de precio vs jugadores promedio <span class="api-source-tag tag-live" id="tagPrecio">CLP</span></div>
-        <div class="chart-subtitle">¿Qué precio maximiza la retención? (P2)</div>
-        <div class="chart-wrap"><canvas id="chartPrecio"></canvas></div>
-      </div>
-      <div class="chart-panel">
-        <div class="chart-title">Score de reseñas — top 8 juegos</div>
-        <div class="chart-subtitle">¿Calidad percibida vs popularidad? (P3)</div>
-        <div class="chart-wrap"><canvas id="chartReviews"></canvas></div>
-      </div>
-    </div>
-
-    <div class="chart-panel">
-      <div class="chart-title">Top juegos — Detalle completo
-        <span class="live-badge" style="margin-left:8px;"><div class="live-dot"></div> Jugadores en tiempo real · Precios en CLP</span>
-      </div>
-      <div class="chart-subtitle">Jugadores obtenidos de Steam Web API · Precios de Steam Store API con cc=cl</div>
-      <div style="overflow-x:auto;margin-top:8px;">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Juego</th>
-              <th onclick="sortTable('live_players')" title="Ordenar por jugadores live">Jugando ahora ↕</th>
-              <th onclick="sortTable('price_clp')" title="Ordenar por precio">Precio CLP ↕</th>
-              <th>Tipo</th>
-              <th>Score</th>
-              <th onclick="sortTable('owners_n')" title="Ordenar por propietarios">Propietarios ↕</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-            <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--steam-muted);"><div class="spinner"></div>Cargando datos desde Steam API...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- ===== TAB: MODELO OLAP ===== -->
-  <div id="tab-modelo" class="tab-panel">
-    <div class="star-model">
-      <div class="chart-title">Modelo Multidimensional — Esquema Estrella</div>
-      <div class="chart-subtitle">Granularidad: 1 fila = 1 juego × 1 snapshot de jugadores concurrentes</div>
-      <div class="star-grid">
-        <div class="dim-card fact-card">
-          <div class="dim-title fact">⭐ FACT_METRICAS_JUEGO (Tabla de Hechos)</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px">
-            <div class="dim-col"><strong class="fk">appid</strong> FK</div>
-            <div class="dim-col"><strong class="fk">tiempo_id</strong> FK</div>
-            <div class="dim-col"><strong class="fk">genero_id</strong> FK</div>
-            <div class="dim-col"><strong class="fk">precio_id</strong> FK</div>
-            <div class="dim-col"><strong class="measure">jugadores_live</strong> medida</div>
-            <div class="dim-col"><strong class="measure">peak_jugadores</strong> medida</div>
-            <div class="dim-col"><strong class="measure">playtime_promedio_hrs</strong> medida</div>
-            <div class="dim-col"><strong class="measure">reseñas_positivas</strong> medida</div>
-            <div class="dim-col"><strong class="measure">reseñas_negativas</strong> medida</div>
-            <div class="dim-col"><strong class="measure">propietarios_estimados</strong> medida</div>
+      <main>
+        <!-- ═══ PERFIL ═══ -->
+        <div id="view-perfil" class="view active">
+          <div id="profile-hero-wrap"></div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">Juegos más jugados</div>
+              <div class="card-sub">De toda la historia de tu cuenta</div>
+              <div id="top-games-list"></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Distribución por horas</div>
+              <div class="card-sub">Top 8 juegos</div>
+              <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+            </div>
           </div>
         </div>
-        <div class="dim-card">
-          <div class="dim-title dim">🎮 DIM_JUEGO</div>
-          <div class="dim-col"><strong class="pk">appid</strong> PK</div>
-          <div class="dim-col">nombre</div>
-          <div class="dim-col">desarrollador</div>
-          <div class="dim-col">editor</div>
-          <div class="dim-col">fecha_lanzamiento</div>
-          <div class="dim-col">plataformas</div>
-        </div>
-        <div class="dim-card">
-          <div class="dim-title dim">🕐 DIM_TIEMPO</div>
-          <div class="dim-col"><strong class="pk">tiempo_id</strong> PK</div>
-          <div class="dim-col">fecha_snapshot</div>
-          <div class="dim-col">año</div>
-          <div class="dim-col">mes</div>
-          <div class="dim-col">hora</div>
-          <div class="dim-col">dia_semana</div>
-        </div>
-        <div class="dim-card">
-          <div class="dim-title dim">🏷️ DIM_GENERO</div>
-          <div class="dim-col"><strong class="pk">genero_id</strong> PK</div>
-          <div class="dim-col">nombre_genero</div>
-          <div class="dim-col">categoria</div>
-          <div class="dim-col">subcategoria</div>
-        </div>
-        <div class="dim-card">
-          <div class="dim-title dim">💰 DIM_PRECIO</div>
-          <div class="dim-col"><strong class="pk">precio_id</strong> PK</div>
-          <div class="dim-col">precio_clp</div>
-          <div class="dim-col">precio_usd</div>
-          <div class="dim-col">rango_precio</div>
-          <div class="dim-col">es_gratuito</div>
-          <div class="dim-col">descuento_pct</div>
-        </div>
-        <div class="dim-card">
-          <div style="font-size:11px;color:var(--steam-muted);line-height:1.8;">
-            <div style="color:var(--steam-teal);font-weight:600;margin-bottom:6px;">Leyenda</div>
-            <div><strong class="pk">■</strong> PK — Clave primaria</div>
-            <div><strong class="fk">■</strong> FK — Clave foránea</div>
-            <div><strong class="measure">■</strong> Medida cuantitativa</div>
+
+        <!-- ═══ COMPARATIVA ═══ -->
+        <div id="view-comparativa" class="view">
+          <div class="view-title">Tu Perfil vs La Comunidad</div>
+          <div class="view-sub">Compara tus juegos y horas con los más jugados en Steam ahora mismo</div>
+          
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">📊 Tus top 5 vs Mundo</div>
+              <div class="card-sub">Comparación de horas jugadas</div>
+              <div class="chart-wrap"><canvas id="compareChart"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title">🎮 Juegos en común</div>
+              <div class="card-sub">Intersección entre tu biblioteca y top global</div>
+              <div id="common-games-list" style="max-height:300px;overflow-y:auto;"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🌍 Análisis Comparativo — Top 10 Global vs Tus Juegos</div>
+            <div class="card-sub">Jugadores en vivo en tiempo real (Steam Web API) vs tus horas totales</div>
+            <div style="overflow-x:auto;margin-top:8px;">
+              <table class="data-table" style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">
+                <thead>
+                  <tr style="background:var(--surface2);border-bottom:1px solid var(--border);">
+                    <th style="padding:10px 12px;text-align:left;color:var(--muted);font-size:11px;font-weight:600;">Puesto</th>
+                    <th style="padding:10px 12px;text-align:left;color:var(--muted);font-size:11px;font-weight:600;">Juego</th>
+                    <th style="padding:10px 12px;text-align:right;color:var(--muted);font-size:11px;font-weight:600;">Jugadores Ahora 🌍</th>
+                    <th style="padding:10px 12px;text-align:right;color:var(--muted);font-size:11px;font-weight:600;">Tus Horas 👤</th>
+                    <th style="padding:10px 12px;text-align:center;color:var(--muted);font-size:11px;font-weight:600;">Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="compare-table-body">
+                  <tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Cargando datos...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="chart-panel">
-      <div class="chart-title">Consulta OLAP interactiva</div>
-      <div class="chart-subtitle">Selecciona dimensión y medida — datos calculados desde los juegos cargados</div>
-      <div class="olap-controls">
-        <div><label>DIMENSIÓN</label>
-          <select id="olapDim" onchange="renderOlap()">
-            <option value="genre">Género</option>
-            <option value="price">Rango de precio (CLP)</option>
-          </select>
+        <!-- ═══ RECIENTES ═══ -->
+        <div id="view-recientes" class="view">
+          <div class="view-title">Jugado recientemente</div>
+          <div class="view-sub">Últimas 2 semanas de actividad</div>
+          <div id="recent-grid" class="recent-grid"></div>
+          <div class="card" style="margin-top:16px">
+            <div class="card-title">Actividad — últimas 2 semanas</div>
+            <div class="card-sub">Horas por juego en el periodo reciente</div>
+            <div class="chart-wrap"><canvas id="recentBarChart"></canvas></div>
+          </div>
         </div>
-        <div><label>MEDIDA</label>
-          <select id="olapMeasure" onchange="renderOlap()">
-            <option value="players">Jugadores ahora (SUM)</option>
-            <option value="score">Score positivo (AVG)</option>
-          </select>
+
+        <!-- ═══ BIBLIOTECA ═══ -->
+        <div id="view-biblioteca" class="view">
+          <div class="view-title">Mi Biblioteca</div>
+          <div class="view-sub" id="lib-sub">Cargando juegos…</div>
+          <div class="lib-controls">
+            <input class="lib-search" id="lib-search" placeholder="Buscar juego…" oninput="filterLib()">
+            <select class="lib-sort" id="lib-sort" onchange="filterLib()">
+              <option value="playtime">Más jugados</option>
+              <option value="name">A → Z</option>
+              <option value="recent">Jugado recientemente</option>
+            </select>
+            <span class="lib-count" id="lib-count"></span>
+          </div>
+          <div class="lib-grid" id="lib-grid"></div>
         </div>
-      </div>
-      <div class="chart-wrap" style="height:300px;"><canvas id="chartOlap"></canvas></div>
+
+        <!-- ═══ ESTADÍSTICAS ═══ -->
+        <div id="view-estadisticas" class="view">
+          <div class="view-title">Mis Estadísticas</div>
+          <div class="view-sub">Resumen analítico de tu cuenta Steam</div>
+          <div class="kpi-row" id="stats-kpis"></div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">Juegos jugados vs sin jugar</div>
+              <div class="card-sub">Del total de tu biblioteca</div>
+              <div class="chart-wrap"><canvas id="playedDonut"></canvas></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Top 10 por horas absolutas</div>
+              <div class="card-sub">Total de horas acumuladas</div>
+              <div class="chart-wrap"><canvas id="topHoursBar"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
-
-  <!-- ===== TAB: REPORTES ===== -->
-  <div id="tab-reportes" class="tab-panel">
-    <div class="question-grid">
-      <div class="question-card">
-        <div class="q-num">P1</div>
-        <div>
-          <div class="q-text">¿Cuáles son los juegos con mayor número de jugadores concurrentes ahora?</div>
-          <div class="q-answer" id="p1answer">Calculando...</div>
-        </div>
-      </div>
-      <div class="question-card">
-        <div class="q-num">P2</div>
-        <div>
-          <div class="q-text">¿Qué rango de precio (CLP) está asociado a mayor promedio de jugadores activos?</div>
-          <div class="q-answer" id="p2answer">Calculando...</div>
-        </div>
-      </div>
-      <div class="question-card">
-        <div class="q-num">P3</div>
-        <div>
-          <div class="q-text">¿Existe correlación entre reseñas positivas y número de propietarios?</div>
-          <div class="q-answer" id="p3answer">Calculando...</div>
-        </div>
-      </div>
-      <div class="question-card">
-        <div class="q-num">P4</div>
-        <div>
-          <div class="q-text">¿Cómo se distribuyen los géneros en términos de base de jugadores activos?</div>
-          <div class="q-answer" id="p4answer">Calculando...</div>
-        </div>
-      </div>
-    </div>
-    <div class="report-grid">
-      <div class="report-card">
-        <h3>📊 Reporte 1 — Por Género (Product Managers)</h3>
-        <div class="report-meta">GROUP BY dim_genero → SUM(jugadores_live)</div>
-        <div id="reportGenero"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
-      </div>
-      <div class="report-card">
-        <h3>💰 Reporte 2 — Estrategia de Precios CLP (Área Comercial)</h3>
-        <div class="report-meta">GROUP BY dim_precio.rango_clp → AVG(jugadores_live)</div>
-        <div id="reportPrecio"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
-      </div>
-      <div class="report-card">
-        <h3>⭐ Reporte 3 — Calidad vs Popularidad (QA/Marketing)</h3>
-        <div class="report-meta">Top juegos por score con propietarios estimados</div>
-        <div id="reportCalidad"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
-      </div>
-      <div class="report-card">
-        <h3>🏆 Reporte 4 — Top 5 Ejecutivo (Dirección)</h3>
-        <div class="report-meta">KPIs principales — jugadores live en este momento</div>
-        <div id="reportTop5"><div style="color:var(--steam-muted);font-size:12px;">Cargando...</div></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== TAB: ENTORNO ===== -->
-  <div id="tab-entorno" class="tab-panel">
-    <div class="env-grid">
-      <div class="env-card">
-        <div class="env-title">Opción A — Nube (Azure)</div>
-        <div class="env-point x">Azure SQL Database: USD 50–200/mes innecesario</div>
-        <div class="env-point x">Requiere credenciales y configuración Azure</div>
-        <div class="env-point x">Overkill para volumen de datos del prototipo</div>
-        <div class="env-point x">Mayor latencia en laboratorio sin VPN</div>
-      </div>
-      <div class="env-card chosen">
-        <div class="env-title">✅ Opción B — Local (elegida)</div>
-        <div class="env-point">Costo $0: APIs Steam públicas 100% gratuitas</div>
-        <div class="env-point">Sin dependencia de servicios externos ni credenciales</div>
-        <div class="env-point">SQLite + Pandas para modelo estrella local</div>
-        <div class="env-point">HTML portable: funciona en cualquier PC con navegador</div>
-        <div class="env-point">Si escala → migrar a Azure SQL + Databricks</div>
-      </div>
-    </div>
-    <div class="chart-title" style="margin-bottom:8px;">Flujo de trabajo del prototipo</div>
-    <div class="flow-steps">
-      <div class="flow-step"><div class="step-num">01</div>Steam API</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step"><div class="step-num">02</div>ETL Pandas</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step"><div class="step-num">03</div>Esquema ⭐</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step"><div class="step-num">04</div>SQLite</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step"><div class="step-num">05</div>Análisis</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step"><div class="step-num">06</div>Dashboard</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step"><div class="step-num">07</div>Decisiones</div>
-    </div>
-    <div class="report-grid" style="margin-top:12px;">
-      <div class="report-card">
-        <h3>🔌 API 1 — Steam Web API (jugadores live)</h3>
-        <div class="report-meta">api.steampowered.com · Sin API key para datos públicos</div>
-        <div class="report-item"><span>GetNumberOfCurrentPlayers</span><span class="report-val">Live CCU</span></div>
-        <div class="report-item"><span>ISteamUserStats/v1</span><span class="report-val">JSON</span></div>
-        <div class="report-item"><span>Latencia aprox.</span><span class="report-val">~300ms</span></div>
-        <div class="report-item"><span>Autenticación</span><span class="report-val">Ninguna</span></div>
-      </div>
-      <div class="report-card">
-        <h3>🔌 API 2 — Steam Store API (precios CLP)</h3>
-        <div class="report-meta">store.steampowered.com/api · cc=cl · l=spanish</div>
-        <div class="report-item"><span>appdetails?appids&cc=cl</span><span class="report-val">Precio CLP</span></div>
-        <div class="report-item"><span>Reseñas positivas/negativas</span><span class="report-val">JSON</span></div>
-        <div class="report-item"><span>Géneros, fecha lanzamiento</span><span class="report-val">metadata</span></div>
-        <div class="report-item"><span>Autenticación</span><span class="report-val">Ninguna</span></div>
-      </div>
-      <div class="report-card">
-        <h3>🛠️ Stack tecnológico</h3>
-        <div class="report-meta">Herramientas del prototipo</div>
-        <div class="report-item"><span>Python 3 / Jupyter</span><span class="report-val">Análisis ETL</span></div>
-        <div class="report-item"><span>Pandas</span><span class="report-val">Modelado datos</span></div>
-        <div class="report-item"><span>SQLite</span><span class="report-val">Persistencia</span></div>
-        <div class="report-item"><span>Chart.js 4</span><span class="report-val">Visualización</span></div>
-        <div class="report-item"><span>Steam Web API</span><span class="report-val">Jugadores live</span></div>
-      </div>
-      <div class="report-card">
-        <h3>📦 Archivos entregados</h3>
-        <div class="report-meta">Evidencia de evaluación</div>
-        <div class="report-item"><span>informe_steam_bigdata.docx</span><span class="report-val">Informe</span></div>
-        <div class="report-item"><span>steam_bigdata_dashboard.html</span><span class="report-val">Este archivo</span></div>
-        <div class="report-item"><span>steam_bigdata.ipynb</span><span class="report-val">Notebook</span></div>
-        <div class="report-item"><span>steam_bigdata.db</span><span class="report-val">SQLite BD</span></div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
-<footer>
-  <strong>Steam Analytics — Big Data Unidad III</strong> · Instituto Profesional Santo Tomás<br>
-  Nicolás Rojas · Mario Zepeda · 21-06-2026 · Jugadores en tiempo real vía Steam Web API · Precios en CLP vía Steam Store API (cc=cl)
-</footer>
+<!-- MODAL -->
+<div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
 
 <script>
-// ─────────────────────────────────────────────
-//  JUEGOS BASE — appid + metadatos fijos
-//  Los jugadores live y precios CLP se piden a las APIs
-// ─────────────────────────────────────────────
-const GAMES = [
-  {appid:'730',  name:'Counter-Strike 2',      genre:'Action',   positive:82, negative:18, owners:'100,000,000 .. 200,000,000'},
-  {appid:'570',  name:'Dota 2',                genre:'Strategy', positive:80, negative:20, owners:'100,000,000 .. 200,000,000'},
-  {appid:'1172470',name:'Apex Legends',        genre:'Action',   positive:74, negative:26, owners:'50,000,000 .. 100,000,000'},
-  {appid:'578080',name:'PUBG: Battlegrounds',  genre:'Action',   positive:53, negative:47, owners:'50,000,000 .. 100,000,000'},
-  {appid:'1091500',name:'Cyberpunk 2077',      genre:'RPG',      positive:89, negative:11, owners:'10,000,000 .. 50,000,000'},
-  {appid:'1145360',name:'Hades',               genre:'Action',   positive:97, negative:3,  owners:'5,000,000 .. 10,000,000'},
-  {appid:'413150',name:'Stardew Valley',       genre:'RPG',      positive:98, negative:2,  owners:'10,000,000 .. 50,000,000'},
-  {appid:'1086940',name:"Baldur's Gate 3",     genre:'RPG',      positive:97, negative:3,  owners:'10,000,000 .. 50,000,000'},
-  {appid:'440',  name:'Team Fortress 2',       genre:'Action',   positive:86, negative:14, owners:'100,000,000 .. 200,000,000'},
-  {appid:'252490',name:'Rust',                 genre:'Action',   positive:74, negative:26, owners:'10,000,000 .. 50,000,000'},
-  {appid:'230410',name:'Warframe',             genre:'Action',   positive:89, negative:11, owners:'50,000,000 .. 100,000,000'},
-  {appid:'292030',name:'The Witcher 3',        genre:'RPG',      positive:97, negative:3,  owners:'10,000,000 .. 50,000,000'},
-  {appid:'504230',name:'Celeste',              genre:'Platformer',positive:98,negative:2,  owners:'1,000,000 .. 2,000,000'},
-  {appid:'1174180',name:'Red Dead Redemption 2',genre:'Action',  positive:93, negative:7,  owners:'5,000,000 .. 10,000,000'},
-  {appid:'813780',name:'Age of Empires IV',    genre:'Strategy', positive:83, negative:17, owners:'5,000,000 .. 10,000,000'},
-  {appid:'271590',name:'Grand Theft Auto V',   genre:'Action',   positive:88, negative:12, owners:'50,000,000 .. 100,000,000'},
-  {appid:'359550',name:"Tom Clancy's Rainbow Six Siege",genre:'Action',positive:89,negative:11,owners:'30,000,000 .. 50,000,000'},
-  {appid:'205790',name:'Fallout 4',            genre:'RPG',      positive:81, negative:19, owners:'20,000,000 .. 50,000,000'},
-  {appid:'8930',  name:"Don't Starve Together",genre:'Adventure',positive:92, negative:8,  owners:'20,000,000 .. 50,000,000'},
-  {appid:'550',   name:'Left 4 Dead 2',        genre:'Action',   positive:88, negative:12, owners:'20,000,000 .. 50,000,000'},
-  {appid:'620',   name:'Portal 2',             genre:'Puzzle',   positive:97, negative:3,  owners:'20,000,000 .. 50,000,000'},
-  {appid:'238960',name:'Path of Exile',        genre:'Action',   positive:86, negative:14, owners:'20,000,000 .. 50,000,000'},
-  {appid:'582010',name:'Valheim',              genre:'Action',   positive:91, negative:9,  owners:'10,000,000 .. 20,000,000'},
-  {appid:'377160',name:'Dead by Daylight',      genre:'Horror',   positive:82, negative:18, owners:'20,000,000 .. 50,000,000'},
-  {appid:'105600',name:'The Elder Scrolls Online',genre:'RPG',   positive:78, negative:22, owners:'20,000,000 .. 50,000,000'},
-  {appid:'252950',name:'Rocket League',         genre:'Sports',   positive:89, negative:11, owners:'20,000,000 .. 50,000,000'},
-  {appid:'264710',name:'Subnautica',            genre:'Adventure',positive:97, negative:3,  owners:'5,000,000 .. 10,000,000'},
-  {appid:'242760',name:'The Forest',            genre:'Horror',   positive:91, negative:9,  owners:'10,000,000 .. 20,000,000'},
-  {appid:'1245620',name:'Horizon Zero Dawn',    genre:'Action',   positive:91, negative:9,  owners:'10,000,000 .. 20,000,000'},
-  {appid:'526870',name:'Death Stranding',       genre:'Action',   positive:88, negative:12, owners:'5,000,000 .. 10,000,000'},
-  {appid:'1250470',name:'Loop Hero',            genre:'Strategy', positive:95, negative:5,  owners:'2,000,000 .. 5,000,000'},
-  {appid:'304430',name:'Nioh 2',               genre:'Action',   positive:87, negative:13, owners:'2,000,000 .. 5,000,000'},
-  {appid:'305620',name:'The Long Dark',         genre:'Adventure',positive:93, negative:7,  owners:'5,000,000 .. 10,000,000'},
-  {appid:'262060',name:'Cities: Skylines',      genre:'Simulation',positive:96,negative:4,  owners:'10,000,000 .. 20,000,000'},
-  {appid:'49520', name:'Borderlands 2',         genre:'Action',   positive:90, negative:10, owners:'20,000,000 .. 50,000,000'},
-];
-
-// Precios CLP de respaldo (en caso de que la API falle)
-const PRICE_FALLBACK = {
-  '730':0,'570':0,'1172470':0,'578080':29990,'1091500':49990,
-  '1145360':20990,'413150':12990,'1086940':51490,'440':0,
-  '252490':32990,'230410':0,'292030':32990,'504230':16990,
-  '1174180':49990,'813780':40990,
-  '271590':49990,'359550':14990,'205790':19990,'8930':7990,
-  '550':12990,'620':9990,'238960':0,'582010':13990,
-  '377160':8990,'105600':14990,'252950':0,'264710':13990,
-  '242760':9990,'1245620':16990,'526870':14990,'1250470':8990,
-  '304430':20990,'305620':9990,'262060':9990,'49520':4990
-};
-// Jugadores live de respaldo
-const PLAYERS_FALLBACK = {
-  '730':874523,'570':621845,'1172470':318240,'578080':289740,
-  '1091500':198560,'1145360':118760,'413150':104200,'1086940':96800,
-  '440':89500,'252490':82400,'230410':77200,'292030':44100,
-  '504230':48300,'1174180':29800,'813780':142300,
-  '271590':312000,'359550':65000,'205790':29000,'8930':26000,
-  '550':34000,'620':32000,'238960':70000,'582010':92000,
-  '377160':47000,'105600':41000,'252950':58000,'264710':22000,
-  '242760':24000,'1245620':38000,'526870':16000,'1250470':14500,
-  '304430':12500,'305620':18000,'262060':21000,'49520':30000
-};
-
-let gameData = [];
+// ════════════════════════════════════════
+//  GLOBAL STATE
+// ════════════════════════════════════════
+let currentMode = 'analytics';
+let isLoggedIn = false;
+let API_KEY = '', STEAM_ID = '';
+let userData = { profile:{}, games:[], recent:[] };
+let publicData = { topGames:[] };
 let charts = {};
-let sortDir = {};
+let allGames = [];
 
-// ─────────────────────────────────────────────
-//  UTILIDADES
-// ─────────────────────────────────────────────
-function fmt(n){
-  if(n===undefined||n===null||isNaN(n))return'—';
-  return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(0)+'K':String(n);
-}
-function fmtClp(n){
-  if(!n||n===0)return'Gratis';
-  return '$'+n.toLocaleString('es-CL');
-}
-function parseOwners(str){
-  if(!str)return 0;
-  const m=str.match(/(\d[\d,]*)/);
-  return m?parseInt(m[1].replace(/,/g,''),10):0;
-}
-function priceRangeClp(clp){
-  if(clp===0)return'Gratis (F2P)';
-  if(clp<10000)return'< $10.000';
-  if(clp<25000)return'$10.000–$25.000';
-  if(clp<40000)return'$25.000–$40.000';
-  return'$40.000+';
-}
-function setStatus(state,msg){
-  const d=document.getElementById('statusDot');
-  const t=document.getElementById('statusText');
-  d.className='status-dot'+(state==='loading'?' loading':state==='error'?' error':'');
-  t.textContent=msg;
+// ════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('hide'), 600);
+  const saved = localStorage.getItem('steamscope_creds');
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      document.getElementById('inp-key').value = c.key;
+      document.getElementById('inp-id').value  = c.id;
+    } catch(e){}
+  }
+  loadAnalyticsContent();
+});
+
+// ════════════════════════════════════════
+//  MODE SWITCHING
+// ════════════════════════════════════════
+function switchMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-content').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(mode + '-mode').classList.add('active');
+  document.querySelector(`button[onclick="switchMode('${mode}')"]`).classList.add('active');
 }
 
-// ─────────────────────────────────────────────
-//  FETCH JUGADORES LIVE — Steam Web API
-//  https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=X
-// ─────────────────────────────────────────────
-async function fetchLivePlayers(appid){
-  try {
-    const url = `https://pryecto-big-data.vercel.app/api/steam?appid=${appid}`; 
-    const ac = new AbortController();
-    const t = setTimeout(()=>ac.abort(), 10000);
-    const r = await fetch(url, {signal: ac.signal});
-    clearTimeout(t);
-    const j = await r.json();
-    const n = j?.response?.player_count;
-    return (n && n > 0) ? n : null;
-  } catch(e){ return null; }
+// ════════════════════════════════════════
+//  LOGIN FLOW
+// ════════════════════════════════════════
+function skipLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
 }
 
-// ─────────────────────────────────────────────
-//  FETCH PRECIO CLP — Steam Store API cc=cl
-// ─────────────────────────────────────────────
-async function fetchPriceClp(appid){
-  try {
-    const url = `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=cl&filters=price_overview`;
-    const ac = new AbortController();
-    const t = setTimeout(()=>ac.abort(), 10000);
-    const r = await fetch(url, {signal: ac.signal});
-    clearTimeout(t);
-    const j = await r.json();
-    const data = j?.[appid]?.data;
-    if(data === false || !data) return null; // juego sin precio = gratuito
-    if(!j?.[appid]?.success) return null;
-    // Si no tiene price_overview = gratis
-    if(!data.price_overview) return 0;
-    // final_formatted viene en CLP, final viene en centavos CLP
-    return Math.round((data.price_overview.final || 0) / 100);
-  } catch(e){ return null; }
-}
-
-// ─────────────────────────────────────────────
-//  CARGA PRINCIPAL
-// ─────────────────────────────────────────────
-async function loadAll(){
-  setStatus('loading','Conectando con Steam Web API para jugadores en tiempo real...');
-
-  // Inicializar con datos de respaldo para mostrar algo de inmediato
-  gameData = GAMES.map(g=>({
-    ...g,
-    live_players: PLAYERS_FALLBACK[g.appid] || 0,
-    price_clp: PRICE_FALLBACK[g.appid] ?? 0,
-    owners_n: parseOwners(g.owners),
-    source_players: 'fallback',
-    source_price: 'fallback',
-  }));
-  render();
-
-  let liveOk = 0, priceOk = 0;
-
-  // Cargar jugadores live y precios en paralelo por juego
-  const results = await Promise.allSettled(
-    GAMES.map(async (g) => {
-      const [players, price] = await Promise.all([
-        fetchLivePlayers(g.appid),
-        fetchPriceClp(g.appid),
-      ]);
-      return { appid: g.appid, players, price };
-    })
-  );
-
-  results.forEach(r => {
-    if(r.status !== 'fulfilled') return;
-    const {appid, players, price} = r.value;
-    const idx = gameData.findIndex(g=>g.appid===appid);
-    if(idx === -1) return;
-    if(players !== null){ gameData[idx].live_players = players; gameData[idx].source_players='live'; liveOk++; }
-    if(price !== null){   gameData[idx].price_clp = price;     gameData[idx].source_price='live'; priceOk++; }
-  });
-
-  // Ordenar por jugadores live desc
-  gameData.sort((a,b)=>b.live_players - a.live_players);
-
-  const now = new Date().toLocaleTimeString('es-CL');
-  document.getElementById('lastUpdate').textContent = `Actualizado: ${now}`;
-
-  if(liveOk > 0 || priceOk > 0){
-    setStatus('ok',`✓ Steam Web API: ${liveOk}/${GAMES.length} jugadores live · ${priceOk}/${GAMES.length} precios CLP obtenidos · ${now}`);
-  } else {
-    setStatus('error',`API Steam no disponible (requiere Live Server o servidor web) — mostrando datos de referencia · ${now}`);
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  API_KEY  = document.getElementById('inp-key').value.trim();
+  const rawId = document.getElementById('inp-id').value.trim();
+  
+  if (!API_KEY || !rawId) { 
+    showErr('Completa ambos campos o usa "Ver Analytics público".'); 
+    return; 
   }
 
-  render();
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Conectando…';
+
+  try {
+    STEAM_ID = await resolveId(rawId);
+    await loadAllData();
+    await loadPublicGames();
+    localStorage.setItem('steamscope_creds', JSON.stringify({ key: API_KEY, id: rawId }));
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    isLoggedIn = true;
+    document.getElementById('profile-mode-btn').style.display = 'block';
+    document.getElementById('nav-right-profile').style.display = 'flex';
+    document.getElementById('comparativa-tab').style.display = 'block';
+    renderPerfil();
+    setInterval(loadPublicGames, 5 * 60 * 1000);
+  } catch(e) {
+    showErr(e.message || 'Error al conectar. Verifica tu API Key y Steam ID.');
+    btn.disabled = false;
+    btn.innerHTML = 'Conectar con Steam';
+  }
 }
 
-// ─────────────────────────────────────────────
-//  RENDER
-// ─────────────────────────────────────────────
-function render(){
-  renderKPIs();
-  renderTable();
-  renderChartTop10();
-  renderChartGenero();
-  renderChartPrecio();
-  renderChartReviews();
-  renderOlap();
-  renderReportes();
+function showErr(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
 }
 
-function renderKPIs(){
-  const total = gameData.reduce((s,g)=>s+g.live_players,0);
-  const freeJ = gameData.filter(g=>g.price_clp===0).reduce((s,g)=>s+g.live_players,0);
-  const scores = gameData.map(g=>{const t=g.positive+g.negative;return t>0?g.positive*100/t:0;});
-  const avgScore = scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
-  const liveCount = gameData.filter(g=>g.source_players==='live').length;
-
-  document.getElementById('kpi-juegos').textContent = gameData.length;
-  document.getElementById('kpi-jugadores').textContent = fmt(total);
-  document.getElementById('kpi-live-label').textContent = liveCount > 0
-    ? `⬤ ${liveCount} juegos con datos live ahora`
-    : '⬤ Datos de referencia';
-  document.getElementById('kpi-free').textContent = total>0?Math.round(freeJ*100/total)+'%':'—';
-  document.getElementById('kpi-score').textContent = avgScore.toFixed(0)+'%';
+function doLogout() {
+  localStorage.removeItem('steamscope_creds');
+  API_KEY = STEAM_ID = '';
+  userData = { profile:{}, games:[], recent:[] };
+  publicData = { topGames:[] };
+  allGames = [];
+  isLoggedIn = false;
+  Object.values(charts).forEach(c => { try{c.destroy()}catch(e){} });
+  charts = {};
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('inp-key').value = '';
+  document.getElementById('inp-id').value = '';
+  document.getElementById('profile-mode-btn').style.display = 'none';
+  document.getElementById('nav-right-profile').style.display = 'none';
+  document.getElementById('comparativa-tab').style.display = 'none';
+  currentMode = 'analytics';
+  switchMode('analytics');
 }
 
-function renderTable(){
-  const tbody = document.getElementById('tableBody');
-  const sorted = [...gameData].sort((a,b)=>b.live_players-a.live_players);
-  tbody.innerHTML = sorted.map((g,i)=>{
-    const t=g.positive+g.negative;
-    const pct=t>0?Math.round(g.positive*100/t):0;
-    const priceTxt = fmtClp(g.price_clp);
-    const isFree = g.price_clp===0;
-    const isLive = g.source_players==='live';
-    const isPriceLive = g.source_price==='live';
-    const scoreColor = pct>=90?'var(--steam-green-light)':pct>=70?'#a4d007':pct>=50?'var(--steam-orange)':'var(--steam-red)';
-    return `<tr>
-      <td style="color:var(--steam-muted)">${i+1}</td>
-      <td style="font-weight:600;color:var(--steam-white)">${g.name}</td>
-      <td>
-        <span style="color:var(--steam-teal);font-weight:600">${fmt(g.live_players)}</span>
-        ${isLive?'<span class="api-source-tag tag-live" style="margin-left:4px;">LIVE</span>':'<span class="api-source-tag tag-cache">REF</span>'}
-      </td>
-      <td>
-        <span style="color:${isFree?'var(--steam-green-light)':'var(--steam-gray)'}">${priceTxt}</span>
-        ${isPriceLive?'<span class="api-source-tag tag-live" style="margin-left:4px;">CLP</span>':''}
-      </td>
-      <td><span class="badge ${isFree?'badge-free':'badge-paid'}">${isFree?'F2P':'Pago'}</span></td>
-      <td>
-        <span style="font-size:11px;color:${scoreColor}">${pct}%</span>
-        <div class="score-bar"><div class="score-fill" style="width:${pct}%;background:${scoreColor}"></div></div>
-      </td>
-      <td style="color:var(--steam-muted);font-size:11px">${g.owners.split('..')[0].trim()}</td>
-    </tr>`;
-  }).join('');
+// ════════════════════════════════════════
+//  STEAM API HELPERS
+// ════════════════════════════════════════
+const PROXIES = [
+  'https://corsproxy.io/?url=',
+  'https://api.allorigins.win/raw?url=',
+];
+const STEAM_API = 'https://api.steampowered.com';
+const IMG_BASE  = 'https://cdn.akamai.steamstatic.com/steam/apps';
+
+async function steamFetch(url) {
+  const errors = [];
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(url), { headers:{ 'x-cors-api-key':'temp_...', 'X-Requested-With':'XMLHttpRequest' } });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      return data;
+    } catch(e) { errors.push(e.message); }
+  }
+  throw new Error('No se pudo conectar con Steam API: ' + errors.join(' | '));
 }
 
-function sortTable(key){
-  sortDir[key]=!sortDir[key];
-  gameData.sort((a,b)=>sortDir[key]?b[key]-a[key]:a[key]-b[key]);
-  renderTable();
+async function resolveId(raw) {
+  const cleaned = raw.trim().replace(/\/$/, '');
+  if (/^\d{17}$/.test(cleaned)) return cleaned;
+  const mProf = cleaned.match(/profiles\/(\d{17})/);
+  if (mProf) return mProf[1];
+  const vanity = cleaned.match(/\/id\/([^\/]+)/)?.[1] || cleaned.replace('https://steamcommunity.com/id/','');
+  const url = `${STEAM_API}/ISteamUser/ResolveVanityURL/v1/?key=${API_KEY}&vanityurl=${encodeURIComponent(vanity)}`;
+  const data = await steamFetch(url);
+  if (data.response?.success === 1) return data.response.steamid;
+  throw new Error('No se pudo resolver el perfil de Steam. Verifica el ID o URL.');
 }
 
-function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
+async function loadAllData() {
+  const [profileData, gamesData, recentData] = await Promise.all([
+    steamFetch(`${STEAM_API}/ISteamUser/GetPlayerSummaries/v2/?key=${API_KEY}&steamids=${STEAM_ID}`),
+    steamFetch(`${STEAM_API}/IPlayerService/GetOwnedGames/v1/?key=${API_KEY}&steamid=${STEAM_ID}&include_appinfo=true&include_played_free_games=true&format=json`),
+    steamFetch(`${STEAM_API}/IPlayerService/GetRecentlyPlayedGames/v1/?key=${API_KEY}&steamid=${STEAM_ID}&count=20&format=json`),
+  ]);
 
-function renderChartTop10(){
-  destroyChart('top10');
-  const sorted=[...gameData].sort((a,b)=>b.live_players-a.live_players).slice(0,10);
-  const ctx=document.getElementById('chartTop10').getContext('2d');
-  charts['top10']=new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels:sorted.map(g=>g.name.length>18?g.name.substring(0,16)+'…':g.name),
-      datasets:[{
-        label:'Jugadores ahora',
-        data:sorted.map(g=>g.live_players),
-        backgroundColor:sorted.map(g=>g.price_clp===0?'rgba(164,208,7,0.75)':'rgba(26,159,255,0.75)'),
-        borderColor:sorted.map(g=>g.price_clp===0?'#a4d007':'#1a9fff'),
-        borderWidth:1,borderRadius:3,
-      }]
-    },
-    options:{
-      indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)+' jugando ahora'}}},
-      scales:{
-        x:{ticks:{color:'#8f98a0',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,71,94,0.5)'}},
-        y:{ticks:{color:'#c6d4df',font:{size:10}},grid:{display:false}}
-      }
-    }
-  });
+  userData.profile = profileData.response?.players?.[0] || {};
+  userData.games   = gamesData.response?.games || [];
+  userData.recent  = recentData.response?.games || [];
+  userData.games.sort((a,b) => (b.playtime_forever||0) - (a.playtime_forever||0));
+  allGames = [...userData.games];
+
+  document.getElementById('nav-avatar').src = userData.profile.avatar || '';
+  document.getElementById('nav-username').textContent = userData.profile.personaname || 'Usuario';
 }
 
-function renderChartGenero(){
-  destroyChart('genero');
-  const byGenre={};
-  gameData.forEach(g=>{byGenre[g.genre]=(byGenre[g.genre]||0)+g.live_players;});
-  const top6=Object.entries(byGenre).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  const colors=['rgba(26,159,255,0.8)','rgba(164,208,7,0.8)','rgba(155,89,182,0.8)','rgba(243,156,18,0.8)','rgba(231,76,60,0.8)','rgba(102,192,244,0.8)'];
-  const ctx=document.getElementById('chartGenero').getContext('2d');
-  charts['genero']=new Chart(ctx,{
+// ════════════════════════════════════════
+//  LOAD PUBLIC DATA FROM STEAM API (LIVE)
+// ════════════════════════════════════════
+async function loadPublicGames() {
+  const TOP_APPIDS = ['730','570','1172470','578080','1091500','1145360','413150','1086940','440','252490'];
+  const GAME_NAMES = {
+    '730':'Counter-Strike 2','570':'Dota 2','1172470':'Apex Legends','578080':'PUBG','1091500':'Cyberpunk 2077',
+    '1145360':'Hades','413150':'Stardew Valley','1086940':"Baldur's Gate 3",'440':'Team Fortress 2','252490':'Rust'
+  };
+  
+  try {
+    const gamePromises = TOP_APPIDS.map(async appid => {
+      const players = await fetchLivePlayers(appid);
+      return {appid, players, name: GAME_NAMES[appid] || 'Juego '+appid};
+    });
+    const results = await Promise.all(gamePromises);
+    publicData.topGames = results.filter(r => r.players !== null).sort((a,b) => b.players - a.players);
+    if(isLoggedIn) renderComparativa();
+  } catch(e) { console.error('Error cargando datos públicos:', e); }
+}
+
+async function fetchLivePlayers(appid) {
+  try {
+    const url = `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${appid}`;
+    const proxy = 'https://corsproxy.io/?url=';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(proxy + encodeURIComponent(url), {
+      headers:{'x-cors-api-key':'temp_...','X-Requested-With':'XMLHttpRequest'},
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if(!res.ok) return null;
+    const j = await res.json();
+    const n = j?.response?.player_count;
+    return (n && n > 0) ? n : null;
+  } catch(e) { return null; }
+}
+
+// ════════════════════════════════════════
+//  ANALYTICS CONTENT
+// ════════════════════════════════════════
+function loadAnalyticsContent() {
+  const html = `
+    <div class="status-bar" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--steam-green-light)"></div>
+        <span>📊 Steam Analytics público — Big Data Unidad III</span>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.4rem;margin-bottom:2rem;">
+      <div style="font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:4px;">📊 Modelos Disponibles</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:1rem;">Análisis multidimensional del ecosistema de juegos en Steam</div>
+      
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;">
+        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de Top 10 jugadores ahora')">
+          <div class="card-title">🎮 Top 10 Juegos en Vivo</div>
+          <div class="card-sub">Jugadores concurrentes en tiempo real</div>
+          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
+        </div>
+        
+        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de distribución por género')">
+          <div class="card-title">🏷️ Distribución por Género</div>
+          <div class="card-sub">¿Qué géneros concentran más jugadores?</div>
+          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
+        </div>
+
+        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de estrategia de precios')">
+          <div class="card-title">💰 Estrategia de Precios CLP</div>
+          <div class="card-sub">Rango de precio vs. retención de jugadores</div>
+          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
+        </div>
+
+        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Análisis de calidad de reseñas')">
+          <div class="card-title">⭐ Calidad vs. Popularidad</div>
+          <div class="card-sub">Score de reseñas en top juegos</div>
+          <div style="color:var(--steam-teal);font-size:12px;">→ Ver analytics</div>
+        </div>
+
+        <div class="card" style="cursor:pointer;border:1px solid var(--border)" onclick="alert('Modelo OLAP interactivo')">
+          <div class="card-title">📐 Modelo Multidimensional</div>
+          <div class="card-sub">Esquema estrella + consultas OLAP</div>
+          <div style="color:var(--steam-teal);font-size:12px;">→ Ver modelo</div>
+        </div>
+
+        <div class="card" style="cursor:pointer;border:1px solid var(--border);opacity:0.7;">
+          <div class="card-title">🔌 Fuentes de Datos</div>
+          <div class="card-sub">Steam Web API + Steam Store API</div>
+          <div style="color:var(--steam-teal);font-size:12px;">Datos públicos en vivo</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.4rem;">
+      <div style="font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:12px;">ℹ️ Sobre este análisis</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;">
+        <p>🎓 <strong>Instituto Profesional Santo Tomás</strong> — Evaluación Final Big Data Unidad III</p>
+        <p>👥 <strong>Estudiantes:</strong> Nicolás Rojas · Mario Zepeda</p>
+        <p>📅 <strong>Fecha:</strong> 21 de junio de 2026</p>
+        <p>🏗️ <strong>Arquitectura:</strong> SQLite + Pandas (ETL) → Modelo Estrella → Visualización HTML/Chart.js</p>
+        <p>🔌 <strong>APIs públicas:</strong> Steam Web API (jugadores en vivo) + Steam Store API (precios CLP)</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('analytics-content').innerHTML = html;
+}
+
+// ════════════════════════════════════════
+//  SCOPE TAB SWITCHING
+// ════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  const labels = {perfil:'Mi Perfil',comparativa:'🌍 Vs Comunidad',recientes:'Recientes',biblioteca:'Biblioteca',estadisticas:'Estadísticas'};
+  document.querySelectorAll('.nav-tab').forEach(b => { if(b.textContent===labels[tab]) b.classList.add('active'); });
+  if (tab==='perfil') renderPerfil();
+  if (tab==='comparativa') renderComparativa();
+  if (tab==='recientes') renderRecientes();
+  if (tab==='biblioteca') renderBiblioteca();
+  if (tab==='estadisticas') renderEstadisticas();
+}
+
+// ════════════════════════════════════════
+//  SCOPE HELPERS
+// ════════════════════════════════════════
+const fmtHrs = mins => mins < 60 ? mins+'m' : (mins/60).toFixed(0)+'h';
+const gameImg = (appid) => `${IMG_BASE}/${appid}/header.jpg`;
+function destroyChart(k){ if(charts[k]){ try{charts[k].destroy()}catch(e){} delete charts[k]; } }
+
+// ════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ════════════════════════════════════════
+function renderPerfil() {
+  const p = userData.profile;
+  const totalHrs = Math.round(userData.games.reduce((s,g) => s+(g.playtime_forever||0),0)/60);
+  const stateMap = {0:'Offline',1:'Online',2:'Busy',3:'Away',4:'Snooze',5:'Looking to trade',6:'Looking to play'};
+  const isOnline = p.personastate === 1;
+
+  document.getElementById('profile-hero-wrap').innerHTML = `
+    <div class="profile-hero">
+      <img class="profile-avatar" src="${p.avatarfull||''}" alt="" onerror="this.style.display='none'">
+      <div>
+        <div class="profile-name">${p.personaname||'—'}</div>
+        <div class="profile-state ${isOnline?'state-online':'state-offline'}">● ${stateMap[p.personastate]||'Offline'}</div>
+        <a class="profile-url" href="${p.profileurl||'#'}" target="_blank">${(p.profileurl||'').replace('https://','')}</a>
+      </div>
+      <div class="profile-stats">
+        <div class="ps-item"><div class="ps-val">${userData.games.length.toLocaleString('es-CL')}</div><div class="ps-label">Juegos</div></div>
+        <div class="ps-item"><div class="ps-val">${totalHrs.toLocaleString('es-CL')}</div><div class="ps-label">Horas totales</div></div>
+        <div class="ps-item"><div class="ps-val">${userData.recent.length}</div><div class="ps-label">Jugados (2 sem)</div></div>
+      </div>
+    </div>
+  `;
+
+  const top = userData.games.slice(0,15);
+  const maxPt = top[0]?.playtime_forever || 1;
+  document.getElementById('top-games-list').innerHTML = top.map((g,i) => `
+    <div class="game-row" onclick="openGameModal(${g.appid})">
+      <div class="game-row-num">${i+1}</div>
+      <img class="game-thumb" src="${gameImg(g.appid)}" alt="" onerror="this.style.background='var(--surface2)';this.removeAttribute('src')">
+      <div class="game-row-name">${g.name||'Juego '+g.appid}</div>
+      <div class="playtime-bar-wrap">
+        <div class="playtime-bar"><div class="playtime-fill" style="width:${Math.round((g.playtime_forever/maxPt)*100)}%"></div></div>
+      </div>
+      <div class="game-row-time"><strong>${fmtHrs(g.playtime_forever)}</strong></div>
+    </div>
+  `).join('');
+
+  destroyChart('pie');
+  const top8 = top.slice(0,8);
+  const COLORS = ['#1a9fff','#4ade80','#fbbf24','#f87171','#c084fc','#fb923c','#22d3ee','#a3e635'];
+  charts.pie = new Chart(document.getElementById('pieChart'), {
     type:'doughnut',
     data:{
-      labels:top6.map(e=>e[0]),
-      datasets:[{data:top6.map(e=>e[1]),backgroundColor:colors,borderColor:'#16202d',borderWidth:2,hoverOffset:6}]
+      labels: top8.map(g => (g.name||'?').length>16?(g.name||'?').slice(0,14)+'…':g.name||'?'),
+      datasets:[{ data: top8.map(g=>g.playtime_forever), backgroundColor:COLORS, borderColor:'#0e1621', borderWidth:2 }]
     },
     options:{
-      responsive:true,maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
       plugins:{
-        legend:{position:'right',labels:{color:'#c6d4df',font:{size:10},padding:10,boxWidth:12}},
-        tooltip:{callbacks:{label:c=>{
-          const tot=top6.reduce((s,e)=>s+e[1],0);
-          return `${c.label}: ${fmt(c.raw)} (${tot>0?Math.round(c.parsed/tot*100):0}%)`;
-        }}}
+        legend:{ position:'right', labels:{ color:'#68788a', font:{family:'Inter',size:11}, boxWidth:10, padding:8 } },
+        tooltip:{ callbacks:{ label: c => ` ${c.label}: ${fmtHrs(c.parsed)}` } }
       }
     }
   });
 }
 
-function renderChartPrecio(){
-  destroyChart('precio');
-  const ranges={};
-  gameData.forEach(g=>{
-    const r=priceRangeClp(g.price_clp);
-    if(!ranges[r])ranges[r]={sum:0,count:0};
-    ranges[r].sum+=g.live_players;ranges[r].count++;
-  });
-  const order=['Gratis (F2P)','< $10.000','$10.000–$25.000','$25.000–$40.000','$40.000+'];
-  const labels=order.filter(k=>ranges[k]);
-  const avgs=labels.map(k=>Math.round(ranges[k].sum/ranges[k].count));
-  const ctx=document.getElementById('chartPrecio').getContext('2d');
-  charts['precio']=new Chart(ctx,{
-    type:'bar',
-    data:{
-      labels,
-      datasets:[{
-        label:'Promedio jugadores',
-        data:avgs,
-        backgroundColor:['rgba(164,208,7,0.75)','rgba(26,159,255,0.6)','rgba(26,159,255,0.7)','rgba(102,192,244,0.7)','rgba(155,89,182,0.6)'],
-        borderRadius:4,
-      }]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)+' prom. jugadores'}}},
-      scales:{
-        x:{ticks:{color:'#c6d4df',font:{size:10}},grid:{display:false}},
-        y:{ticks:{color:'#8f98a0',font:{size:10},callback:v=>fmt(v)},grid:{color:'rgba(42,71,94,0.5)'}}
-      }
+function renderComparativa() {
+  const top5User = userData.games.slice(0, 5);
+  
+  // Encontrar juegos en común
+  const userAppIds = new Set(userData.games.map(g => g.appid));
+  const commonGames = publicData.topGames.filter(g => userAppIds.has(parseInt(g.appid)));
+  
+  // Tabla comparativa
+  const tableRows = publicData.topGames.slice(0, 10).map((pg, idx) => {
+    const userGame = userData.games.find(ug => ug.appid === parseInt(pg.appid));
+    const userHrs = userGame ? (userGame.playtime_forever / 60).toFixed(1) : 0;
+    const hasGame = userGame ? '✓ Tienes' : '✗ No tienes';
+    const hasGameColor = userGame ? 'color:var(--green)' : 'color:var(--muted)';
+    return `
+      <tr style="border-bottom:1px solid rgba(255,255,255,.04);">
+        <td style="padding:9px 12px;color:var(--muted);text-align:center">#${idx+1}</td>
+        <td style="padding:9px 12px;color:#fff;font-weight:500">${pg.name}</td>
+        <td style="padding:9px 12px;text-align:right;color:var(--steam-teal);font-weight:600">${(pg.players||0).toLocaleString('es-CL')} 🌍</td>
+        <td style="padding:9px 12px;text-align:right;color:var(--blue);font-weight:600">${userHrs} hrs 👤</td>
+        <td style="padding:9px 12px;text-align:center;${hasGameColor};font-weight:600;font-size:11px">${hasGame}</td>
+      </tr>
+    `;
+  }).join('');
+  
+  document.getElementById('compare-table-body').innerHTML = tableRows || '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Cargando datos...</td></tr>';
+  
+  // Gráfico comparativo
+  destroyChart('compare');
+  if(top5User.length > 0) {
+    const top5Names = top5User.map(g => (g.name||'?').length>15?(g.name||'?').slice(0,13)+'…':g.name||'?');
+    const top5Hours = top5User.map(g => (g.playtime_forever/60).toFixed(0));
+    
+    const ctx = document.getElementById('compareChart')?.getContext('2d');
+    if(ctx) {
+      charts.compare = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: top5Names,
+          datasets: [
+            {
+              label: 'Tus horas (hrs)',
+              data: top5Hours,
+              backgroundColor: 'rgba(26,159,255,0.8)',
+              borderRadius: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { labels: { color: '#c7d5e0', font: {family: 'Inter', size: 11}, boxWidth: 12 } }
+          },
+          scales: {
+            x: { ticks: { color: '#68788a', font: {family: 'Inter', size: 10} }, grid: { display: false } },
+            y: { ticks: { color: '#68788a', font: {family: 'Inter', size: 11} }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          }
+        }
+      });
     }
-  });
+  }
+  
+  // Lista de juegos en común
+  if(commonGames.length > 0) {
+    document.getElementById('common-games-list').innerHTML = commonGames.map(g => {
+      const ug = userData.games.find(x => x.appid === parseInt(g.appid));
+      const pct = Math.round((ug.playtime_forever / 60) / 24 * 10) / 10;
+      return `
+        <div class="game-row">
+          <div class="game-row-num">⭐</div>
+          <img class="game-thumb" src="${gameImg(g.appid)}" alt="" onerror="this.style.background='var(--surface2)';this.removeAttribute('src')">
+          <div class="game-row-name">${g.name}</div>
+          <div class="game-row-time">Tú: <strong>${(ug.playtime_forever/60).toFixed(0)}h</strong> | Mundo: <strong>${(g.players||0).toLocaleString('es-CL')}</strong></div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    document.getElementById('common-games-list').innerHTML = '<div class="empty" style="padding:20px"><div class="empty-icon">🎮</div><p>No tienes los top juegos globales en tu biblioteca</p></div>';
+  }
 }
 
-function renderChartReviews(){
-  destroyChart('reviews');
-  const top8=[...gameData].sort((a,b)=>b.live_players-a.live_players).slice(0,8);
-  const ctx=document.getElementById('chartReviews').getContext('2d');
-  charts['reviews']=new Chart(ctx,{
+function renderRecientes() {
+  const R = userData.recent;
+  if (!R.length) {
+    document.getElementById('recent-grid').innerHTML = '<div class="empty"><div class="empty-icon">🎮</div><p>Sin actividad reciente en las últimas 2 semanas</p></div>';
+    return;
+  }
+  document.getElementById('recent-grid').innerHTML = R.map(g => `
+    <div class="recent-card" onclick="openGameModal(${g.appid})">
+      <img src="${gameImg(g.appid)}" alt="" onerror="this.style.background='var(--surface2)';this.removeAttribute('src')">
+      <div class="recent-card-body">
+        <div class="recent-card-name">${g.name||'Juego '+g.appid}</div>
+        <div class="recent-card-time">Reciente: <strong>${fmtHrs(g.playtime_2weeks)}</strong></div>
+        <div class="recent-card-time">Total: ${fmtHrs(g.playtime_forever)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  destroyChart('recentBar');
+  charts.recentBar = new Chart(document.getElementById('recentBarChart'), {
     type:'bar',
     data:{
-      labels:top8.map(g=>g.name.length>14?g.name.substring(0,12)+'…':g.name),
+      labels: R.slice(0,10).map(g => (g.name||'?').length>14?(g.name||'?').slice(0,12)+'…':g.name||'?'),
       datasets:[
-        {label:'% Positivo',data:top8.map(g=>{const t=g.positive+g.negative;return t>0?Math.round(g.positive*100/t):0;}),backgroundColor:'rgba(164,208,7,0.75)',borderRadius:3},
-        {label:'% Negativo',data:top8.map(g=>{const t=g.positive+g.negative;return t>0?Math.round(g.negative*100/t):0;}),backgroundColor:'rgba(231,76,60,0.5)',borderRadius:3},
+        { label:'Últimas 2 semanas (hrs)', data: R.slice(0,10).map(g=>+(g.playtime_2weeks/60).toFixed(1)), backgroundColor:'rgba(26,159,255,0.8)', borderRadius:4 },
+        { label:'Total histórico (hrs)', data: R.slice(0,10).map(g=>+(g.playtime_forever/60).toFixed(0)), backgroundColor:'rgba(74,222,128,0.3)', borderRadius:4 }
       ]
     },
     options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#c6d4df',font:{size:10}},position:'top'}},
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:'#c7d5e0', font:{family:'Inter',size:11}, boxWidth:12 } } },
       scales:{
-        x:{stacked:true,ticks:{color:'#c6d4df',font:{size:10}},grid:{display:false}},
-        y:{stacked:true,max:100,ticks:{color:'#8f98a0',font:{size:10},callback:v=>v+'%'},grid:{color:'rgba(42,71,94,0.5)'}}
+        x:{ ticks:{ color:'#68788a', font:{family:'Inter',size:10}, maxRotation:30 }, grid:{ display:false } },
+        y:{ ticks:{ color:'#68788a', font:{family:'Inter',size:11} }, grid:{ color:'rgba(255,255,255,0.05)' } }
       }
     }
   });
 }
 
-function renderOlap(){
-  destroyChart('olap');
-  const dim=document.getElementById('olapDim')?.value||'genre';
-  const measure=document.getElementById('olapMeasure')?.value||'players';
-  const agg={};
-  gameData.forEach(g=>{
-    const key=dim==='genre'?g.genre:priceRangeClp(g.price_clp);
-    if(!agg[key])agg[key]={sum:0,count:0,scoreSum:0};
-    agg[key].sum+=g.live_players;agg[key].count++;
-    const t=g.positive+g.negative;
-    agg[key].scoreSum+=t>0?g.positive*100/t:0;
-  });
-  const order=dim==='price'?['Gratis (F2P)','< $10.000','$10.000–$25.000','$25.000–$40.000','$40.000+']:null;
-  let entries=Object.entries(agg);
-  if(order) entries=entries.sort((a,b)=>(order.indexOf(a[0]))-(order.indexOf(b[0])));
-  else entries=entries.sort((a,b)=>b[1].sum-a[1].sum);
-  const vals=entries.map(e=>measure==='players'?e[1].sum:Math.round(e[1].scoreSum/e[1].count));
-  const ctx=document.getElementById('chartOlap').getContext('2d');
-  charts['olap']=new Chart(ctx,{
-    type:'bar',
+function renderBiblioteca() {
+  document.getElementById('lib-sub').textContent = `${allGames.length.toLocaleString('es-CL')} juegos en tu biblioteca`;
+  filterLib();
+}
+
+function filterLib() {
+  const q = document.getElementById('lib-search')?.value.toLowerCase()||'';
+  const sort = document.getElementById('lib-sort')?.value||'playtime';
+  let list = [...allGames].filter(g => !q || (g.name||'').toLowerCase().includes(q));
+  if (sort==='name') list.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+  else if (sort==='recent') list.sort((a,b) => (b.rtime_last_played||0)-(a.rtime_last_played||0));
+  else list.sort((a,b) => (b.playtime_forever||0)-(a.playtime_forever||0));
+
+  document.getElementById('lib-count').textContent = list.length.toLocaleString('es-CL')+' juegos';
+  const recentIds = new Set(userData.recent.map(g=>g.appid));
+  document.getElementById('lib-grid').innerHTML = list.slice(0,200).map(g => `
+    <div class="lib-card" onclick="openGameModal(${g.appid})">
+      <img src="${gameImg(g.appid)}" alt="" onerror="this.style.background='var(--surface2)';this.removeAttribute('src')">
+      <div class="lib-card-body">
+        <div class="lib-card-name">${g.name||'Juego '+g.appid}</div>
+        <div class="lib-card-hrs">${g.playtime_forever?'<strong>'+fmtHrs(g.playtime_forever)+'</strong> jugadas':'Sin jugar'}</div>
+        ${recentIds.has(g.appid)?'<div class="lib-card-badge">Reciente</div>':''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderEstadisticas() {
+  const games = allGames;
+  const totalGames = games.length;
+  const played = games.filter(g => (g.playtime_forever||0)>0);
+  const unplayed = games.filter(g => !(g.playtime_forever||0));
+  const totalHrs = games.reduce((s,g)=>s+(g.playtime_forever||0),0)/60;
+  const mostPlayed = games[0];
+
+  document.getElementById('stats-kpis').innerHTML = `
+    <div class="kpi"><div class="kpi-label">Juegos totales</div><div class="kpi-val">${totalGames.toLocaleString('es-CL')}</div></div>
+    <div class="kpi"><div class="kpi-label">Horas totales</div><div class="kpi-val">${Math.round(totalHrs).toLocaleString('es-CL')}<small>hrs</small></div></div>
+    <div class="kpi"><div class="kpi-label">Sin jugar</div><div class="kpi-val">${unplayed.length}<small>${Math.round(unplayed.length/totalGames*100)}%</small></div></div>
+    <div class="kpi"><div class="kpi-label">Juego #1</div><div class="kpi-val" style="font-size:16px;line-height:1.3">${(mostPlayed?.name||'—').slice(0,20)}</div></div>
+  `;
+
+  destroyChart('playedDonut');
+  charts.playedDonut = new Chart(document.getElementById('playedDonut'), {
+    type:'doughnut',
     data:{
-      labels:entries.map(e=>e[0]),
-      datasets:[{label:measure==='players'?'Total jugadores':'Score positivo (%)',data:vals,backgroundColor:'rgba(102,192,244,0.65)',borderColor:'#66c0f4',borderWidth:1,borderRadius:4}]
+      labels:['Jugados','Sin abrir','< 1 hora'],
+      datasets:[{
+        data:[
+          played.filter(g=>g.playtime_forever>=60).length,
+          unplayed.length,
+          played.filter(g=>g.playtime_forever>0&&g.playtime_forever<60).length
+        ],
+        backgroundColor:['#1a9fff','#f87171','#fbbf24'],
+        borderColor:'#0e1621', borderWidth:2
+      }]
     },
     options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>measure==='players'?fmt(c.raw)+' jugadores':c.raw+'%'}}},
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{ legend:{ position:'bottom', labels:{ color:'#68788a', font:{family:'Inter',size:11}, boxWidth:10, padding:10 } } }
+    }
+  });
+
+  const top10 = games.slice(0,10);
+  destroyChart('topHrs');
+  charts.topHrs = new Chart(document.getElementById('topHoursBar'), {
+    type:'bar',
+    data:{
+      labels: top10.map(g => (g.name||'?').length>14?(g.name||'?').slice(0,12)+'…':g.name||'?'),
+      datasets:[{ data: top10.map(g=>+(g.playtime_forever/60).toFixed(0)), backgroundColor:'rgba(26,159,255,0.75)', borderRadius:4, borderSkipped:false }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c=>' '+c.parsed.x.toLocaleString('es-CL')+' horas' } } },
       scales:{
-        x:{ticks:{color:'#c6d4df',font:{size:11}},grid:{display:false}},
-        y:{ticks:{color:'#8f98a0',font:{size:10},callback:v=>measure==='players'?fmt(v):v+'%'},grid:{color:'rgba(42,71,94,0.5)'}}
+        x:{ ticks:{ color:'#68788a', font:{family:'Inter',size:11} }, grid:{ color:'rgba(255,255,255,0.05)' } },
+        y:{ ticks:{ color:'#68788a', font:{family:'Inter',size:11} }, grid:{ display:false } }
       }
     }
   });
 }
 
-function renderReportes(){
-  const sorted=[...gameData].sort((a,b)=>b.live_players-a.live_players);
-  const top1=sorted[0];
-  const byGenre={};
-  gameData.forEach(g=>{byGenre[g.genre]=(byGenre[g.genre]||0)+g.live_players;});
-  const topGenre=Object.entries(byGenre).sort((a,b)=>b[1]-a[1])[0];
-  const total=gameData.reduce((s,g)=>s+g.live_players,0);
-  const freeJ=gameData.filter(g=>g.price_clp===0).reduce((s,g)=>s+g.live_players,0);
-
-  document.getElementById('p1answer').textContent=top1
-    ?`${top1.name} lidera con ${fmt(top1.live_players)} jugadores ahora. Género dominante: ${topGenre?topGenre[0]:'—'}.`:'—';
-
-  const byPrice={};
-  gameData.forEach(g=>{const r=priceRangeClp(g.price_clp);if(!byPrice[r])byPrice[r]={s:0,c:0};byPrice[r].s+=g.live_players;byPrice[r].c++;});
-  const topPrice=Object.entries(byPrice).sort((a,b)=>(b[1].s/b[1].c)-(a[1].s/a[1].c))[0];
-  document.getElementById('p2answer').textContent=topPrice
-    ?`El rango "${topPrice[0]}" tiene mayor promedio (${fmt(Math.round(topPrice[1].s/topPrice[1].c))} jugadores/juego).`:'—';
-
-  const highScore=gameData.filter(g=>{const t=g.positive+g.negative;return t>0&&g.positive*100/t>=90;});
-  document.getElementById('p3answer').textContent=`${highScore.length} de ${gameData.length} juegos tienen ≥90% positivo. Correlación confirmada: mayor score → más propietarios.`;
-  document.getElementById('p4answer').textContent=`F2P concentra ${total>0?Math.round(freeJ*100/total):0}% de jugadores ahora. Top géneros: ${Object.entries(byGenre).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join(', ')}.`;
-
-  const genreEntries=Object.entries(byGenre).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById('reportGenero').innerHTML=genreEntries.map(([g,v])=>
-    `<div class="report-item"><span><span class="badge-genre">${g}</span></span><span class="report-val">${fmt(v)}</span></div>`).join('');
-
-  const priceEntries=Object.entries(byPrice).map(([r,v])=>({r,avg:Math.round(v.s/v.c)})).sort((a,b)=>b.avg-a.avg);
-  document.getElementById('reportPrecio').innerHTML=priceEntries.map(e=>
-    `<div class="report-item"><span>${e.r}</span><span class="report-val">${fmt(e.avg)} prom.</span></div>`).join('');
-
-  const topScore=[...gameData].map(g=>{const t=g.positive+g.negative;return{...g,pct:t>0?Math.round(g.positive*100/t):0};}).sort((a,b)=>b.pct-a.pct).slice(0,5);
-  document.getElementById('reportCalidad').innerHTML=topScore.map(g=>
-    `<div class="report-item"><span style="font-size:11px">${g.name}</span><span class="report-val">${g.pct}% ⭐</span></div>`).join('');
-
-  document.getElementById('reportTop5').innerHTML=sorted.slice(0,5).map((g,i)=>
-    `<div class="report-item"><span style="color:var(--steam-muted);margin-right:6px">#${i+1}</span><span style="font-size:11px">${g.name}</span><span class="report-val">${fmt(g.live_players)} jugando</span></div>`).join('');
+// ════════════════════════════════════════
+//  GAME MODAL
+// ════════════════════════════════════════
+function openGameModal(appid) {
+  const g = allGames.find(x => x.appid===appid) || userData.recent.find(x=>x.appid===appid);
+  if (!g) return;
+  const recentG = userData.recent.find(x=>x.appid===appid);
+  document.getElementById('modal-body').innerHTML = `
+    <img class="modal-img" src="${gameImg(appid)}" alt="" onerror="this.style.display='none'">
+    <div class="modal-name">${g.name||'Juego '+appid}</div>
+    <div class="modal-stats">
+      <div class="ms"><div class="ms-val">${fmtHrs(g.playtime_forever||0)}</div><div class="ms-label">Total jugado</div></div>
+      <div class="ms"><div class="ms-val">${recentG?fmtHrs(recentG.playtime_2weeks):'—'}</div><div class="ms-label">Últ. 2 semanas</div></div>
+      <div class="ms"><div class="ms-val">${g.playtime_forever?'Sí':'No'}</div><div class="ms-label">Jugado</div></div>
+    </div>
+    <a href="https://store.steampowered.com/app/${appid}" target="_blank" style="display:inline-block;padding:10px 20px;background:var(--blue);color:#fff;border-radius:7px;text-decoration:none;font-size:13px;font-weight:600;margin-top:4px">Ver en Steam Store →</a>
+  `;
+  document.getElementById('modal').classList.add('open');
 }
 
-function switchTab(id,btn){
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+id).classList.add('active');
-  btn.classList.add('active');
-  if(id==='modelo') setTimeout(renderOlap, 50);
-}
-
-// Auto-refrescar jugadores live cada 5 minutos
-setInterval(loadAll, 5 * 60 * 1000);
-
-loadAll();
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
 </script>
 </body>
 </html>
