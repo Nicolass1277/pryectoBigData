@@ -695,40 +695,45 @@ function loadAnalyticsContent() {
         <div style="width:10px;height:10px;border-radius:50%;background:var(--steam-teal)"></div>
         <div>
           <div style="font-weight:700;color:#fff;">Steam Analytics público</div>
-          <div style="font-size:12px;color:var(--muted);">Visualización de top games y jugadores en vivo</div>
+          <div style="font-size:12px;color:var(--muted);">Dashboard público con top Steam y gráficas en vivo</div>
         </div>
       </div>
-      <button id="analytics-back-btn" class="mode-btn" style="display:none;padding:8px 14px;">← Volver al login</button>
+      <button id="analytics-back-btn" class="mode-btn" style="display:none;padding:8px 14px;" onclick="returnToLogin()">← Volver al login</button>
     </div>
 
     <div class="grid-2" style="gap:18px;margin-bottom:22px;">
       <div class="card">
-        <div class="card-title">🎮 Top 10 juegos con más jugadores</div>
-        <div class="card-sub">Cifras en vivo desde Steam Web API</div>
+        <div class="card-title">🎮 Top 10 global</div>
+        <div class="card-sub">Los títulos con más jugadores simultáneos</div>
         <div id="public-top-games" style="margin-top:16px;"></div>
       </div>
       <div class="card">
-        <div class="card-title">📈 Jugadores concurrentes</div>
-        <div class="card-sub">Comparativa de los top games ahora mismo</div>
-        <div class="chart-wrap" style="min-height:280px;margin-top:16px;"><canvas id="publicTopChart"></canvas></div>
+        <div class="card-title">📈 Tendencia de jugadores</div>
+        <div class="card-sub">Jugadores en vivo del top global</div>
+        <div class="chart-wrap" style="margin-top:16px;"><canvas id="publicTopChart"></canvas></div>
       </div>
     </div>
 
-    <div class="grid-2" style="gap:18px;margin-bottom:22px;">
+    <div class="grid-3" style="gap:18px;margin-bottom:22px;">
       <div class="card">
         <div class="card-title">📌 Insight rápido</div>
-        <div class="card-sub">Lo que muestra la comunidad ahora</div>
+        <div class="card-sub">Lo más relevante del top global</div>
         <div id="public-insights" style="margin-top:16px;color:var(--text);font-size:13px;line-height:1.6;"></div>
       </div>
       <div class="card">
-        <div class="card-title">🔑 Conecta tu cuenta</div>
-        <div class="card-sub">Compara tus horas con la comunidad global</div>
+        <div class="card-title">🔥 Favoritos de la comunidad</div>
+        <div class="card-sub">Los juegos que dominan la lista ahora</div>
+        <div id="public-fav-list" style="margin-top:16px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔐 Sin iniciar sesión</div>
+        <div class="card-sub">Explora el panel público sin credenciales</div>
         <div style="margin-top:16px;color:var(--muted);font-size:13px;line-height:1.7;">
-          <p>Al iniciar sesión aparecen:</p>
+          <p>En esta vista pública puedes ver:</p>
           <ul style="padding-left:18px;margin-top:8px;">
-            <li>✔ Comparativa TUS juegos vs top global</li>
-            <li>✔ Juegos comunes en tu biblioteca</li>
-            <li>✔ Gráficos con tus horas y jugadores en vivo</li>
+            <li>✔ Top global con jugadores en vivo</li>
+            <li>✔ Gráfica comparativa</li>
+            <li>✔ Insights de tendencia</li>
           </ul>
         </div>
       </div>
@@ -788,6 +793,14 @@ function renderAnalyticsPublic() {
     <p>Top del momento: <strong>${topGame.name}</strong> con <strong>${topGame.players.toLocaleString('es-CL')}</strong> jugadores simultáneos.</p>
     <p>El segundo juego más jugado es <strong>${secondGame.name}</strong>, lo que muestra que el top global se concentra en pocos títulos con audiencia masiva.</p>
   `;
+
+  const favList = publicData.topGames.slice(0, 5).map((game, idx) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+      <span style="font-size:13px;color:var(--text);font-weight:600;">${idx+1}. ${game.name}</span>
+      <span style="font-size:13px;color:var(--steam-teal);font-weight:700;">${game.players?.toLocaleString('es-CL') || '0'}</span>
+    </div>
+  `).join('');
+  document.getElementById('public-fav-list').innerHTML = favList;
 }
 
 // ════════════════════════════════════════
