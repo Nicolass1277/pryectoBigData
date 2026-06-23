@@ -519,18 +519,34 @@ function doLogout() {
 // ════════════════════════════════════════
 const STEAM_API = 'https://api.steampowered.com';
 const IMG_BASE  = 'https://cdn.akamai.steamstatic.com/steam/apps';
-const IS_VERCEL = typeof window !== 'undefined' && (window.location.hostname.includes('vercel.app') || window.location.hostname.includes('localhost'));
 
 async function steamFetch(url) {
   try {
-    // En Vercel, usar backend serverless
-    if (IS_VERCEL && url.includes('api.steampowered.com')) {
+    // Detectar si estamos en Vercel
+    const isVercel = window.location.hostname.includes('vercel.app');
+    
+    if (isVercel) {
+      // Extraer parámetros de la URL
       const urlObj = new URL(url);
-      const endpoint = urlObj.pathname.replace('https://api.steampowered.com/', '');
+      const path = urlObj.pathname.replace('https://api.steampowered.com', '');
       const params = Object.fromEntries(urlObj.searchParams);
       
-      const apiUrl = `/api/steam?endpoint=${encodeURIComponent(endpoint)}&${new URLSearchParams(params).toString()}`;
-      const res = await fetch(apiUrl);
+      // Construir URL para nuestro endpoint serverless
+      let apiCall = '/api/steam?';
+      
+      if (path.includes('GetNumberOfCurrentPlayers')) {
+        apiCall += `endpoint=players&appid=${params.appid}`;
+      } else if (path.includes('GetPlayerSummaries')) {
+        apiCall += `endpoint=summary&key=${params.key}&steamid=${params.steamids}`;
+      } else if (path.includes('GetOwnedGames')) {
+        apiCall += `endpoint=games&key=${params.key}&steamid=${params.steamid}`;
+      } else if (path.includes('GetRecentlyPlayedGames')) {
+        apiCall += `endpoint=recent&key=${params.key}&steamid=${params.steamid}`;
+      } else if (path.includes('ResolveVanityURL')) {
+        apiCall += `endpoint=resolve&key=${params.key}&vanityurl=${params.vanityurl}`;
+      }
+      
+      const res = await fetch(apiCall);
       if (!res.ok) throw new Error('API error');
       return await res.json();
     }
