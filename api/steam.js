@@ -1,7 +1,9 @@
 export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -24,18 +26,24 @@ export default async function handler(req, res) {
     } else if (endpoint === 'resolve' && vanityurl && key) {
       url += `/ISteamUser/ResolveVanityURL/v1/?key=${key}&vanityurl=${encodeURIComponent(vanityurl)}`;
     } else {
-      return res.status(400).json({ error: 'Endpoint inválido' });
+      return res.status(400).json({ error: 'Endpoint inválido', received: { endpoint, appid, steamid, key, vanityurl } });
     }
 
+    console.log('API Call:', url);
+
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'SteamScope' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     });
+
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'Steam API returned ' + response.status });
+    }
 
     const data = await response.json();
     res.status(200).json(data);
 
   } catch (error) {
     console.error('API Error:', error);
-    res.status(500).json({ error: 'Error obteniendo datos de Steam API' });
+    res.status(500).json({ error: 'Error obteniendo datos de Steam API: ' + error.message });
   }
 }
