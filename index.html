@@ -258,6 +258,7 @@ main{max-width:1300px;margin:0 auto;padding:28px 24px}
     <div class="nav-brand">Steam<span>Unified</span></div>
     <div class="nav-mode-selector">
       <button class="mode-btn active" onclick="switchMode('analytics')">📊 Analytics</button>
+      <button class="mode-btn" id="analytics-exit-nav" onclick="returnToLogin()" style="display:none">← Volver</button>
       <button class="mode-btn" id="profile-mode-btn" onclick="switchMode('scope')" style="display:none">👤 Mi Perfil</button>
     </div>
     <div class="nav-right" id="nav-right-profile" style="display:none">
@@ -451,6 +452,17 @@ function switchMode(mode) {
 function skipLogin() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
+  document.getElementById('analytics-back-btn').style.display = 'inline-flex';
+  document.getElementById('analytics-exit-nav').style.display = 'inline-flex';
+}
+
+function returnToLogin() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('analytics-back-btn').style.display = 'none';
+  document.getElementById('analytics-exit-nav').style.display = 'none';
+  currentMode = 'analytics';
+  switchMode('analytics');
 }
 
 async function doLogin() {
@@ -479,6 +491,8 @@ async function doLogin() {
     document.getElementById('profile-mode-btn').style.display = 'block';
     document.getElementById('nav-right-profile').style.display = 'flex';
     document.getElementById('comparativa-tab').style.display = 'block';
+    document.getElementById('analytics-back-btn').style.display = 'none';
+    document.getElementById('analytics-exit-nav').style.display = 'none';
     renderPerfil();
     setInterval(loadPublicGames, 5 * 60 * 1000);
   } catch(e) {
@@ -510,6 +524,8 @@ function doLogout() {
   document.getElementById('profile-mode-btn').style.display = 'none';
   document.getElementById('nav-right-profile').style.display = 'none';
   document.getElementById('comparativa-tab').style.display = 'none';
+  document.getElementById('analytics-back-btn').style.display = 'none';
+  document.getElementById('analytics-exit-nav').style.display = 'none';
   currentMode = 'analytics';
   switchMode('analytics');
 }
@@ -608,18 +624,48 @@ async function loadPublicGames() {
   };
   
   try {
+    console.log('[loadPublicGames] Iniciando carga de datos públicos...');
     const gamePromises = TOP_APPIDS.map(async appid => {
-      const players = await fetchLivePlayers(appid);
-      return {appid, players, name: GAME_NAMES[appid] || 'Juego '+appid};
+      try {
+        const players = await fetchLivePlayers(appid);
+        return {appid, players, name: GAME_NAMES[appid] || 'Juego '+appid};
+      } catch (e) {
+        console.warn(`[loadPublicGames] Error con appid ${appid}:`, e);
+        return {appid, players: null, name: GAME_NAMES[appid] || 'Juego '+appid};
+      }
     });
+    
     const results = await Promise.all(gamePromises);
+    console.log('[loadPublicGames] Resultados:', results);
+    
     publicData.topGames = results.filter(r => r.players !== null).sort((a,b) => b.players - a.players);
-    if(isLoggedIn) renderComparativa();
-  } catch(e) { console.error('Error cargando datos públicos:', e); }
+    console.log('[loadPublicGames] Top games filtrados:', publicData.topGames);
+    
+    if(isLoggedIn) {
+      console.log('[loadPublicGames] Usuario logueado, renderizando comparativa...');
+      renderComparativa();
+    } else {
+      console.log('[loadPublicGames] Usuario NO logueado aún');
+    }
+  } catch(e) { 
+    console.error('[loadPublicGames] Error fatal:', e); 
+  }
 }
 
 async function fetchLivePlayers(appid) {
   try {
+    const isVercel = window.location.hostname.includes('vercel.app');
+    
+    if (isVercel) {
+      // En Vercel usar endpoint serverless
+      const res = await fetch(`/api/steam?endpoint=players&appid=${appid}`);
+      if (!res.ok) return null;
+      const j = await res.json();
+      const n = j?.response?.player_count;
+      return (n && n > 0) ? n : null;
+    }
+    
+    // Local: usar proxy
     const url = `https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/?appid=${appid}`;
     const proxy = 'https://corsproxy.io/?url=';
     const controller = new AbortController();
@@ -633,7 +679,7 @@ async function fetchLivePlayers(appid) {
     const j = await res.json();
     const n = j?.response?.player_count;
     return (n && n > 0) ? n : null;
-  } catch(e) { return null; }
+  } catch(e) { console.error('Error en fetchLivePlayers:', e); return null; }
 }
 
 // ════════════════════════════════════════
@@ -641,12 +687,13 @@ async function fetchLivePlayers(appid) {
 // ════════════════════════════════════════
 function loadAnalyticsContent() {
   const html = `
-    <div class="status-bar" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--steam-green-light)"></div>
-        <span>📊 Steam Analytics público — Big Data Unidad III</span>
-      </div>
-    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <button id="analytics-back-btn" class="nav-tab" style="display:none;padding:8px 14px;" onclick="returnToLogin()">← Volver al login</button>
+      <div class="status-bar" style="flex:1 1 auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:12px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--steam-green-light)"></div>
+          <span>📊 Steam Analytics público — Big Data Unidad III</span>
+        </div>
 
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1.4rem;margin-bottom:2rem;">
       <div style="font-size:13px;font-weight:600;color:var(--steam-gray);margin-bottom:4px;">📊 Modelos Disponibles</div>
@@ -787,11 +834,26 @@ function renderPerfil() {
 }
 
 function renderComparativa() {
+  console.log('[renderComparativa] Iniciando...', { userData: userData.games.length, publicData: publicData.topGames.length });
+  
+  if (!userData.games || userData.games.length === 0) {
+    console.warn('[renderComparativa] Sin datos de usuario');
+    document.getElementById('common-games-list').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Error: No se cargaron tus juegos</p></div>';
+    return;
+  }
+  
+  if (!publicData.topGames || publicData.topGames.length === 0) {
+    console.warn('[renderComparativa] Sin datos públicos');
+    document.getElementById('common-games-list').innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><p>Cargando datos de la comunidad...</p></div>';
+    return;
+  }
+  
   const top5User = userData.games.slice(0, 5);
   
   // Encontrar juegos en común
   const userAppIds = new Set(userData.games.map(g => g.appid));
   const commonGames = publicData.topGames.filter(g => userAppIds.has(parseInt(g.appid)));
+  console.log('[renderComparativa] Juegos en común:', commonGames.length);
   
   // Tabla comparativa
   const tableRows = publicData.topGames.slice(0, 10).map((pg, idx) => {
@@ -810,7 +872,7 @@ function renderComparativa() {
     `;
   }).join('');
   
-  document.getElementById('compare-table-body').innerHTML = tableRows || '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Cargando datos...</td></tr>';
+  document.getElementById('compare-table-body').innerHTML = tableRows || '<tr><td colspan="5" style="padding:20px;text-align:center;color:var(--muted);">Sin datos disponibles</td></tr>';
   
   // Gráfico comparativo
   destroyChart('compare');
